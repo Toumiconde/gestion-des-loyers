@@ -39,7 +39,7 @@ class ContratController extends Controller
         // Calcul automatique de la date de fin
         if ($validated['duree_mois']) {
             $validated['date_fin'] = now()->parse($validated['date_debut'])
-                                         ->addMonths($validated['duree_mois'])
+                                         ->addMonths((int) $validated['duree_mois'])
                                          ->subDay();
         }
 

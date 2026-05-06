@@ -2,6 +2,13 @@
 
 @section('title', 'Documents')
 
+@section('actions')
+    <a href="{{ route('documents.create') }}"
+       class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+        + Ajouter un document
+    </a>
+@endsection
+
 @section('content')
 <div class="bg-white rounded-xl shadow overflow-hidden">
     <table class="w-full text-sm">

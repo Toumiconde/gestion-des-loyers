@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Quittance;
 use Illuminate\Http\Request;
 
 class QuittanceController extends Controller
@@ -11,7 +12,8 @@ class QuittanceController extends Controller
      */
     public function index()
     {
-        //
+        $quittances = Quittance::with('paiement.contrat.locataire', 'paiement.contrat.bien')->paginate(10);
+        return view('quittances.index', compact('quittances'));
     }
 
     /**
@@ -19,7 +21,7 @@ class QuittanceController extends Controller
      */
     public function create()
     {
-        //
+        return view('quittances.create');
     }
 
     /**
@@ -27,38 +29,39 @@ class QuittanceController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        abort(403, 'La création manuelle de quittance est désactivée.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Quittance $quittance)
     {
-        //
+        $quittance->load('paiement.contrat.locataire', 'paiement.contrat.bien.proprietaire.user');
+        return view('quittances.show', compact('quittance'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Quittance $quittance)
     {
-        //
+        return view('quittances.edit', compact('quittance'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Quittance $quittance)
     {
-        //
+        abort(403, 'Une quittance ne peut pas être modifiée.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Quittance $quittance)
     {
-        //
+        abort(403, 'Une quittance ne peut pas être supprimée.');
     }
 }
