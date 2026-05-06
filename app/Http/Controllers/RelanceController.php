@@ -2,63 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Relance;
+use App\Models\Contrat;
 use Illuminate\Http\Request;
 
 class RelanceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $relances = Relance::with('contrat.locataire')->paginate(10);
+        return view('relances.index', compact('relances'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'contrat_id' => 'required|exists:contrats,id',
+            'niveau'     => 'required|in:niveau_1,niveau_2,niveau_3',
+            'canal'      => 'required|in:email,sms,email_sms',
+        ]);
+
+        $validated['date_envoi'] = now();
+
+        Relance::create($validated);
+
+        return redirect()->back()->with('success', 'Relance envoyée.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, Relance $relance)
     {
-        //
+        // Acquitter une relance manuellement
+        $relance->update([
+            'statut'             => 'acquittee',
+            'acquitte_par'       => auth()->id(),
+            'date_acquittement'  => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Relance acquittée.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    public function create() { return view('relances.create'); }
+    public function show(Relance $relance) { return view('relances.show', compact('relance')); }
+    public function edit(Relance $relance) { return view('relances.edit', compact('relance')); }
+    public function destroy(Relance $relance) { $relance->delete(); return redirect()->route('relances.index'); }
 }

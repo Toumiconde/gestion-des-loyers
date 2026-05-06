@@ -2,63 +2,78 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Locataire;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LocataireController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $locataires = Locataire::with('contratActif.bien')->paginate(10);
+        return view('locataires.index', compact('locataires'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('locataires.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nom'             => 'required|string|max:100',
+            'prenom'          => 'required|string|max:100',
+            'email'           => 'nullable|email|max:191',
+            'telephone'       => 'nullable|string|max:20',
+            'adresse'         => 'nullable|string',
+            'piece_identite'  => 'nullable|string|max:100',
+        ]);
+
+        Locataire::create($validated);
+
+        return redirect()->route('locataires.index')
+                         ->with('success', 'Locataire ajouté avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Locataire $locataire)
     {
-        //
+        $locataire->load('contrats.bien', 'contrats.paiements');
+        return view('locataires.show', compact('locataire'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Locataire $locataire)
     {
-        //
+        return view('locataires.edit', compact('locataire'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Locataire $locataire)
     {
-        //
+        $validated = $request->validate([
+            'nom'            => 'required|string|max:100',
+            'prenom'         => 'required|string|max:100',
+            'email'          => 'nullable|email|max:191',
+            'telephone'      => 'nullable|string|max:20',
+            'adresse'        => 'nullable|string',
+            'piece_identite' => 'nullable|string|max:100',
+        ]);
+
+        $locataire->update($validated);
+
+        return redirect()->route('locataires.index')
+                         ->with('success', 'Locataire mis à jour.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Locataire $locataire)
     {
-        //
+        if ($locataire->contratActif) {
+            return redirect()->route('locataires.index')
+                             ->with('error', 'Impossible de supprimer un locataire avec un contrat actif.');
+        }
+
+        $locataire->delete();
+
+        return redirect()->route('locataires.index')
+                         ->with('success', 'Locataire supprimé.');
     }
 }

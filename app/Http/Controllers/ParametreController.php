@@ -2,63 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Parametre;
 use Illuminate\Http\Request;
 
 class ParametreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $parametres = Parametre::all();
+        return view('parametres.index', compact('parametres'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'cle'         => 'required|string|max:100|unique:parametres,cle',
+            'valeur'      => 'required|string',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $validated['updated_by'] = auth()->id();
+        Parametre::create($validated);
+
+        return redirect()->route('parametres.index')->with('success', 'Paramètre ajouté.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, Parametre $parametre)
     {
-        //
+        $validated = $request->validate([
+            'valeur'      => 'required|string',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $validated['updated_by'] = auth()->id();
+        $parametre->update($validated);
+
+        return redirect()->route('parametres.index')->with('success', 'Paramètre mis à jour.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    public function create() { return view('parametres.create'); }
+    public function show(Parametre $parametre) { return view('parametres.show', compact('parametre')); }
+    public function edit(Parametre $parametre) { return view('parametres.edit', compact('parametre')); }
+    public function destroy(Parametre $parametre) { $parametre->delete(); return redirect()->route('parametres.index'); }
 }

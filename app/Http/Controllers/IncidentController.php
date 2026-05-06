@@ -2,63 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Incident;
+use App\Models\Contrat;
 use Illuminate\Http\Request;
 
 class IncidentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $incidents = Incident::with('contrat.locataire', 'contrat.bien')
+                             ->orderBy('priorite', 'desc')
+                             ->paginate(10);
+        return view('incidents.index', compact('incidents'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        $contrats = Contrat::where('statut', 'actif')->with('locataire', 'bien')->get();
+        return view('incidents.create', compact('contrats'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'contrat_id'  => 'required|exists:contrats,id',
+            'titre'       => 'required|string|max:200',
+            'description' => 'required|string',
+            'priorite'    => 'required|in:faible,moyen,urgent',
+        ]);
+
+        $validated['declare_par'] = auth()->id();
+
+        Incident::create($validated);
+
+        return redirect()->route('incidents.index')
+                         ->with('success', 'Incident déclaré avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Incident $incident)
     {
-        //
+        $incident->load('contrat.locataire', 'contrat.bien', 'declarePar');
+        return view('incidents.show', compact('incident'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Incident $incident)
     {
-        //
+        return view('incidents.edit', compact('incident'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Incident $incident)
     {
-        //
+        $validated = $request->validate([
+            'statut'          => 'required|in:ouvert,en_cours,resolu,ferme',
+            'date_resolution' => 'nullable|date',
+        ]);
+
+        $incident->update($validated);
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Incident mis à jour.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Incident $incident)
     {
-        //
+        $incident->delete();
+        return redirect()->route('incidents.index')
+                         ->with('success', 'Incident supprimé.');
     }
 }
