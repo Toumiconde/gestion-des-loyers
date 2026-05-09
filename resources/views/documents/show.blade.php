@@ -85,23 +85,34 @@
 
         {{-- Aperçu --}}
         <div class="lg:col-span-2">
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 min-h-[600px] flex items-center justify-center">
-                @if(in_array(strtolower($ext), ['jpg', 'jpeg', 'png']))
-                    <img src="{{ Storage::url($document->chemin ?? $document->path) }}" class="max-w-full rounded-2xl shadow-lg border border-slate-100">
-                @elseif(strtolower($ext) === 'pdf')
-                    <iframe src="{{ Storage::url($document->chemin ?? $document->path) }}" class="w-full h-[800px] rounded-2xl border-0"></iframe>
-                @else
-                    <div class="text-center p-20">
-                        <div class="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
-                            <i class="fa-solid fa-eye-slash text-slate-200 text-4xl"></i>
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden min-h-[700px] flex flex-col">
+                <div class="p-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aperçu du document</span>
+                    @if($document->viewed_at)
+                        <span class="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
+                            <i class="fa-solid fa-check-double"></i> Déjà consulté le {{ $document->viewed_at->format('d/m/Y') }}
+                        </span>
+                    @endif
+                </div>
+                
+                <div class="flex-grow flex items-center justify-center p-4">
+                    @if(in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp']))
+                        <img src="{{ Storage::url($document->chemin ?? $document->path) }}" class="max-w-full rounded-2xl shadow-lg border border-slate-100">
+                    @elseif(in_array(strtolower($ext), ['pdf', 'xls', 'xlsx', 'html', 'txt']))
+                        <iframe src="{{ Storage::url($document->chemin ?? $document->path) }}" class="w-full h-[800px] rounded-xl border-0 bg-slate-50"></iframe>
+                    @else
+                        <div class="text-center p-20">
+                            <div class="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                                <i class="fa-solid fa-eye-slash text-slate-200 text-4xl"></i>
+                            </div>
+                            <h4 class="text-xl font-black text-slate-800 mb-2">Format de lecture spéciale</h4>
+                            <p class="text-slate-400 text-sm max-w-xs mx-auto">Ce document ({{ strtoupper($ext) }}) est archivé dans votre coffre-fort. Vous pouvez le consulter à tout moment en le téléchargeant sur votre appareil.</p>
+                            <a href="{{ Storage::url($document->chemin ?? $document->path) }}" download class="mt-8 inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 active:scale-95">
+                                <i class="fa-solid fa-download"></i> Ouvrir sur mon appareil
+                            </a>
                         </div>
-                        <h4 class="text-xl font-black text-slate-800 mb-2">Aperçu indisponible</h4>
-                        <p class="text-slate-400 text-sm max-w-xs mx-auto">Le format de ce fichier ne permet pas un aperçu direct. Veuillez le télécharger pour le consulter.</p>
-                        <a href="{{ Storage::url($document->chemin ?? $document->path) }}" download class="mt-8 inline-flex items-center gap-2 text-blue-600 font-black hover:underline">
-                            <i class="fa-solid fa-download"></i> Télécharger maintenant
-                        </a>
-                    </div>
-                @endif
+                    @endif
+                </div>
             </div>
         </div>
     </div>
