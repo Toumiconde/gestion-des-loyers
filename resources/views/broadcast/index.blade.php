@@ -22,7 +22,7 @@
                         <span class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block italic">Groupe Cible :</span>
                         <select name="target" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                             <option value="all_tenants">Tous les Locataires {{ auth()->user()->isProprietaire() ? 'de mes biens' : '' }}</option>
-                            @if(auth()->user()->isAdmin())
+                            @if(auth()->user()->isAdmin() || auth()->user()->role === 'gestionnaire')
                                 <option value="all_owners">Tous les Propriétaires</option>
                             @endif
                             <option value="unpaid_tenants" class="text-rose-600">🚨 Locataires en retard (Paiement du mois)</option>
