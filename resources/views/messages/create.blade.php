@@ -70,8 +70,25 @@
                                 <i class="fa-solid fa-user-gear text-2xl text-slate-400"></i>
                                 <span class="text-[10px] font-black uppercase text-slate-600">Tous les Gestionnaires</span>
                             </label>
+                            <label class="relative flex flex-col items-center gap-3 p-4 bg-white border border-rose-200 rounded-2xl cursor-pointer hover:border-rose-500 transition-all">
+                                <input type="radio" name="broadcast_to" value="tenants_in_debt" class="absolute top-4 right-4 text-rose-600 focus:ring-rose-500">
+                                <i class="fa-solid fa-hand-holding-dollar text-2xl text-rose-400"></i>
+                                <span class="text-[10px] font-black uppercase text-rose-600">Locataires en Dette</span>
+                            </label>
                         </div>
                     </div>
+                </div>
+                @endif
+
+                {{-- Option Broadcast pour Propriétaire/Gestionnaire --}}
+                @if(auth()->user()->role === 'proprietaire' || auth()->user()->role === 'gestionnaire')
+                <div class="p-6 bg-slate-50 rounded-3xl border border-slate-100 mb-8" x-show="isBroadcast">
+                    <label class="flex items-center gap-4 cursor-pointer group mb-4">
+                        <input type="checkbox" name="is_broadcast" value="1" x-model="isBroadcast" 
+                               class="w-6 h-6 rounded-lg border-slate-300 text-rose-600 focus:ring-rose-500">
+                        <span class="font-black text-slate-800 uppercase text-xs tracking-widest">Relancer mes Locataires en Dette</span>
+                    </label>
+                    <input type="hidden" name="broadcast_to" value="tenants_in_debt" x-if="isBroadcast">
                 </div>
                 @endif
 

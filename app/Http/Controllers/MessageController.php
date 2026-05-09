@@ -81,9 +81,9 @@ class MessageController extends Controller
     {
         $rules = [
             'content'     => 'required|string|min:2',
-            'attachment'  => 'nullable|file|max:10240', // 10MB
+            'attachment'  => 'nullable|file|max:10240',
             'is_broadcast' => 'nullable|boolean',
-            'broadcast_to' => 'nullable|string|in:all_owners,all_tenants,all_managers',
+            'broadcast_to' => 'nullable|string|in:all_owners,all_tenants,all_managers,tenants_in_debt',
         ];
 
         if (!$request->boolean('is_broadcast')) {
@@ -101,17 +101,15 @@ class MessageController extends Controller
             $extension = strtolower($file->getClientOriginalExtension());
             $attachmentName = $file->getClientOriginalName();
             
-            // Validation WhatsApp-style
             $isPhoto = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
             $isDoc = in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv']);
 
             if (!$isPhoto && !$isDoc) {
-                return back()->withErrors(['attachment' => 'Format de fichier non supporté (Photos ou Documents uniquement).']);
+                return back()->withErrors(['attachment' => 'Format non supporté.']);
             }
 
             $attachmentType = $isPhoto ? 'photo' : 'document';
-            $folder = $isPhoto ? 'messages/photos' : 'messages/documents';
-            $attachmentPath = $file->store($folder, 'public');
+            $attachmentPath = $file->store($isPhoto ? 'messages/photos' : 'messages/documents', 'public');
         }
 
         $sender = Auth::user();
@@ -120,23 +118,40 @@ class MessageController extends Controller
 
         // Destinataires
         $recipients = collect();
-        if ($request->boolean('is_broadcast') && $sender->role === 'admin') {
-            $roleMap = [
-                'all_owners'   => 'proprietaire',
-                'all_tenants'  => 'locataire',
-                'all_managers' => 'gestionnaire',
-            ];
-            $targetRole = $roleMap[$request->broadcast_to];
-            $recipients = User::where('role', $targetRole)->get();
+        if ($request->boolean('is_broadcast')) {
+            if ($request->broadcast_to === 'tenants_in_debt') {
+                // Locataires en dette ou partiel
+                $locataireIds = \App\Models\Paiement::whereIn('statut', ['partiel', 'impayé', 'en_attente'])
+                                ->pluck('contrat_id')
+                                ->unique();
+                
+                $query = User::where('role', 'locataire')
+                    ->whereHas('locataire.contrats', function($q) use ($locataireIds) {
+                        $q->whereIn('id', $locataireIds);
+                    });
+                
+                // Si c'est un propriétaire qui envoie, il ne voit que SES locataires en dette
+                if ($sender->role === 'proprietaire') {
+                    $query->whereHas('locataire.contrats.bien', function($q) use ($sender) {
+                        $q->where('proprietaire_id', $sender->proprietaire->id);
+                    });
+                }
+                $recipients = $query->get();
+            } else if ($sender->role === 'admin' || $sender->role === 'gestionnaire') {
+                $roleMap = [
+                    'all_owners'   => 'proprietaire',
+                    'all_tenants'  => 'locataire',
+                    'all_managers' => 'gestionnaire',
+                ];
+                $recipients = User::where('role', $roleMap[$request->broadcast_to] ?? 'locataire')->get();
+            }
         } else {
             $recipients->push(User::findOrFail($request->receiver_id));
         }
 
         foreach ($recipients as $recipient) {
-            // SÉCURITÉ STRICTE
-            if ($sender->role !== 'admin' && $recipient->role === 'admin' && !$request->boolean('is_support')) {
-                continue; // Skip or handle error
-            }
+            // SÉCURITÉ : Ne pas s'envoyer à soi-même
+            if ($recipient->id === $sender->id) continue;
 
             $message = Message::create([
                 'sender_id'       => $sender->id,
@@ -150,29 +165,26 @@ class MessageController extends Controller
                 'is_support'      => $request->boolean('is_support'),
             ]);
 
-            // Intégration Document
             if ($attachmentPath) {
                 \App\Models\Document::create([
-                    'documentable_type' => get_class($recipient),
+                    'documentable_type' => 'App\\Models\\User',
                     'documentable_id'   => $recipient->id,
                     'nom'               => $attachmentName,
                     'type'              => $attachmentType,
                     'chemin'            => $attachmentPath,
-                    'taille_ko'         => round(filesize(storage_path('app/public/' . $attachmentPath)) / 1024),
+                    'taille_ko'         => round(Storage::disk('public')->size($attachmentPath) / 1024),
                     'uploaded_by'       => $sender->id,
                 ]);
             }
 
-            // Notification
-            $notifTitle = $sender->role === 'admin' ? "L'Administration" : $sender->name;
             $notifMsg = $attachmentPath 
-                ? "Admin vous a envoyé un document/photo. Veuillez consulter vos documents."
-                : "Nouveau message de " . $notifTitle;
+                ? "Admin/Gestion vous a envoyé un document. Consultez vos documents."
+                : "Nouveau message de " . $sender->name;
             
             $recipient->notify(new \App\Notifications\ProfileUpdated($sender, $notifMsg));
         }
 
-        return redirect()->route('messages.index')->with('success', 'Message(s) envoyé(s) avec succès.');
+        return redirect()->route('messages.index')->with('success', 'Message(s) envoyé(s).');
     }
 
     public function show(Message $message)

@@ -97,10 +97,13 @@
                 </div>
             </div>
             @endif
-        </div>
+             @php
+            $isStaffSender = in_array($message->sender->role ?? '', ['admin', 'gestionnaire']);
+            $canReply = $message->can_reply && !$isStaffSender;
+        @endphp
 
         @if($message->receiver_id === auth()->id())
-            @if($message->can_reply)
+            @if($canReply)
             <div class="p-8 border-t border-slate-100 bg-white">
                 <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest mb-6">Répondre</h4>
                 <form method="POST" action="{{ route('messages.store') }}">
@@ -108,8 +111,8 @@
                     <input type="hidden" name="receiver_id" value="{{ $message->sender_id }}">
                     <input type="hidden" name="is_support" value="{{ $message->is_support ? 1 : 0 }}">
                     <textarea name="content" rows="4" required
-                              placeholder="Écrivez votre réponse ici..."
-                              class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-4 px-6 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium mb-6 resize-none"></textarea>
+                               placeholder="Écrivez votre réponse ici..."
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-4 px-6 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium mb-6 resize-none"></textarea>
                     <button type="submit" class="px-8 py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-reply"></i> Envoyer la réponse
                     </button>
@@ -122,18 +125,9 @@
                 </div>
                 <h4 class="text-slate-800 font-black uppercase tracking-widest text-sm mb-2">Message à Sens Unique</h4>
                 <p class="text-slate-500 font-medium max-w-sm">
-                    Cette communication provient de l'administration. 
-                    <span class="block mt-2 font-black text-rose-600 uppercase text-[10px]">Impossible de répondre à l'agence.</span>
+                    Cette communication provient de l'administration ou de la gestion. 
+                    <span class="block mt-2 font-black text-rose-600 uppercase text-[10px]">Réponse impossible pour ce type de message.</span>
                 </p>
-                
-                @if(auth()->user()->role === 'locataire' && ($message->sender->role ?? '') === 'proprietaire')
-                    <div class="mt-8 pt-8 border-t border-slate-200 w-full">
-                        <p class="text-xs text-slate-400 mb-6 font-bold">Si vous avez besoin d'échanger avec votre bailleur :</p>
-                        <a href="{{ route('messages.create') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-white border border-slate-200 text-slate-900 font-black rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95">
-                            <i class="fa-solid fa-message"></i> Écrire à mon propriétaire
-                        </a>
-                    </div>
-                @endif
             </div>
             @endif
         @endif
