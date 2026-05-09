@@ -88,9 +88,15 @@
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Coût Estimé (Devis)</label>
-                            <input type="number" name="cout_estime" value="{{ old('cout_estime', $incident->cout_estime) }}"
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Montant du Devis (GNF)</label>
+                            <input type="number" name="devis_montant" value="{{ old('devis_montant', $incident->devis_montant) }}"
                                    class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-emerald-100 transition-all outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Notes sur le devis (Optionnel)</label>
+                            <textarea name="devis_note" rows="2"
+                                   class="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-emerald-100 transition-all outline-none">{{ old('devis_note', $incident->devis_note) }}</textarea>
                         </div>
 
                         <div>

@@ -170,7 +170,8 @@ class IncidentController extends Controller
 
         $validated = $request->validate([
             'statut'           => 'required|in:ouvert,en_devis,en_travaux,resolu,paye',
-            'cout_estime'      => 'nullable|numeric|min:0',
+            'devis_montant'    => 'nullable|numeric|min:0',
+            'devis_note'       => 'nullable|string',
             'cout_reel'        => 'nullable|numeric|min:0',
             'maintenancier_id' => 'nullable|exists:maintenanciers,id',
             'technicien_nom'   => 'nullable|string|max:255',
@@ -180,7 +181,7 @@ class IncidentController extends Controller
 
         // Si le statut passe à "paye" et n'était pas déjà "paye"
         if ($validated['statut'] === 'paye' && $incident->statut !== 'paye') {
-            if (!$validated['cout_reel'] && !$incident->cout_reel) {
+            if (empty($validated['cout_reel']) && !$incident->cout_reel) {
                 return back()->with('error', 'Veuillez saisir un coût réel pour marquer comme payé.');
             }
 
@@ -197,23 +198,32 @@ class IncidentController extends Controller
 
         // Si le statut passe à "en_devis", on synchronise les champs et on envoie auto au proprio
         if ($validated['statut'] === 'en_devis' && $incident->devis_statut !== 'accepte') {
-            $incident->devis_montant = $validated['cout_estime'];
-            $incident->devis_statut  = 'envoye_proprio';
-            $incident->devis_envoye_at = now();
+            if (empty($validated['devis_montant']) && !$incident->devis_montant) {
+                return back()->with('error', 'Veuillez saisir le Montant du Devis pour passer à ce statut.');
+            }
             
-            // Notifier le propriétaire
-            $proprietaireUser = $incident->contrat->bien->proprietaire->user ?? null;
-            if ($proprietaireUser) {
-                $proprietaireUser->notifications()->create([
-                    'id'              => \Illuminate\Support\Str::uuid(),
-                    'type'            => 'App\Notifications\DevisIncident',
-                    'notifiable_type' => 'App\Models\User',
-                    'notifiable_id'   => $proprietaireUser->id,
-                    'data'            => json_encode([
-                        'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
-                        'url'     => route('incidents.show', $incident),
-                    ]),
-                ]);
+            $incident->devis_montant = $validated['devis_montant'] ?? $incident->devis_montant;
+            $incident->devis_note    = $validated['devis_note'] ?? $incident->devis_note;
+            
+            // On envoie seulement si ça n'a pas déjà été envoyé
+            if ($incident->devis_statut !== 'envoye_proprio') {
+                $incident->devis_statut  = 'envoye_proprio';
+                $incident->devis_envoye_at = now();
+                
+                // Notifier le propriétaire
+                $proprietaireUser = $incident->contrat->bien->proprietaire->user ?? null;
+                if ($proprietaireUser) {
+                    $proprietaireUser->notifications()->create([
+                        'id'              => \Illuminate\Support\Str::uuid(),
+                        'type'            => 'App\Notifications\DevisIncident',
+                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_id'   => $proprietaireUser->id,
+                        'data'            => json_encode([
+                            'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
+                            'url'     => route('incidents.show', $incident),
+                        ]),
+                    ]);
+                }
             }
         }
 
