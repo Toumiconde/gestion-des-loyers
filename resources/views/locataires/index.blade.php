@@ -19,11 +19,13 @@
         </a>
         @endif
 
+        @if(auth()->user()->role !== 'proprietaire')
         <a href="{{ route('locataires.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-user-plus mr-2 group-hover:rotate-12 transition-transform"></i>
             Nouveau locataire
         </a>
+        @endif
     </div>
 </div>
 
@@ -130,24 +132,26 @@
                             <a href="{{ route('locataires.show', $l) }}" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-purple-600 hover:text-white transition-all shadow-sm" title="Voir profil">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
-                            @if(!$l->trashed() && $l->user)
-                            <form action="{{ route('admin.users.reset-password', $l->user) }}" method="POST" onsubmit="return confirm('Réinitialiser le mot de passe de {{ $l->nom_complet }} ?')" class="inline">
-                                @csrf
-                                <button type="submit" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Réinitialiser mot de passe">
-                                    <i class="fa-solid fa-key text-sm"></i>
-                                </button>
-                            </form>
-                            @endif
-                            @if(!$l->trashed())
-                            <a href="{{ route('locataires.edit', $l) }}" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Modifier">
-                                <i class="fa-solid fa-pen text-sm"></i>
-                            </a>
-                            <form action="{{ route('locataires.destroy', $l) }}" method="POST" onsubmit="return confirm('Archiver ce locataire ?')" class="inline">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm">
-                                    <i class="fa-solid fa-trash-can text-sm"></i>
-                                </button>
-                            </form>
+                            @if(auth()->user()->role !== 'proprietaire')
+                                @if(!$l->trashed() && $l->user)
+                                <form action="{{ route('admin.users.reset-password', $l->user) }}" method="POST" onsubmit="return confirm('Réinitialiser le mot de passe de {{ $l->nom_complet }} ?')" class="inline">
+                                    @csrf
+                                    <button type="submit" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Réinitialiser mot de passe">
+                                        <i class="fa-solid fa-key text-sm"></i>
+                                    </button>
+                                </form>
+                                @endif
+                                @if(!$l->trashed())
+                                <a href="{{ route('locataires.edit', $l) }}" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Modifier">
+                                    <i class="fa-solid fa-pen text-sm"></i>
+                                </a>
+                                <form action="{{ route('locataires.destroy', $l) }}" method="POST" onsubmit="return confirm('Archiver ce locataire ?')" class="inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    </button>
+                                </form>
+                                @endif
                             @endif
                         </div>
                     </td>
