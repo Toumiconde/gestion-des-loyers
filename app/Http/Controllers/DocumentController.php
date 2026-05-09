@@ -37,13 +37,20 @@ class DocumentController extends Controller
                     $q2->where('documentable_type', 'App\\Models\\Contrat')
                        ->whereIn('documentable_id', $contratIds);
                 })
+                ->orWhere(function ($q2) use ($user) {
+                    $q2->where('documentable_type', 'App\\Models\\User')
+                       ->where('documentable_id', $user->id);
+                })
                 ->orWhere('uploaded_by', $user->id);
             });
 
         } elseif ($user->isProprietaire()) {
 
             if (!$user->proprietaire) {
-                $documents = collect();
+                // Même sans profil lié, il doit voir les documents envoyés à son User
+                $query->where('documentable_type', 'App\\Models\\User')
+                      ->where('documentable_id', $user->id);
+                $documents = $query->latest()->paginate(15);
                 return view('documents.index', compact('documents'));
             }
 
@@ -51,7 +58,7 @@ class DocumentController extends Controller
             $bienIds        = $user->proprietaire->biens->pluck('id');
             $contratIds     = \App\Models\Contrat::whereIn('bien_id', $bienIds)->pluck('id');
 
-            // Le propriétaire voit les docs de ses biens, ses contrats, et ses uploads
+            // Le propriétaire voit les docs de ses biens, ses contrats, ses uploads et son User
             $query->where(function ($q) use ($proprietaireId, $bienIds, $contratIds, $user) {
                 $q->where(function ($q2) use ($proprietaireId) {
                     $q2->where('documentable_type', 'App\\Models\\Proprietaire')
@@ -64,6 +71,10 @@ class DocumentController extends Controller
                 ->orWhere(function ($q2) use ($contratIds) {
                     $q2->where('documentable_type', 'App\\Models\\Contrat')
                        ->whereIn('documentable_id', $contratIds);
+                })
+                ->orWhere(function ($q2) use ($user) {
+                    $q2->where('documentable_type', 'App\\Models\\User')
+                       ->where('documentable_id', $user->id);
                 })
                 ->orWhere('uploaded_by', $user->id);
             });
