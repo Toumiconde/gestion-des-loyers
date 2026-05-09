@@ -11,26 +11,22 @@ class IncidentController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
         $query = Incident::with('contrat.locataire', 'contrat.bien')->orderBy('priorite', 'desc');
         $maintenanceRequests = collect();
 
-        if (auth()->user()->isProprietaire()) {
-            if (!auth()->user()->proprietaire) {
-                abort(403, 'Profil propriétaire non configuré.');
-            }
-            $proprietaireId = auth()->user()->proprietaire->id;
-            $query->whereHas('contrat.bien', function($q) use ($proprietaireId) {
-                $q->where('proprietaire_id', $proprietaireId);
-            });
-            // Pour le proprio, on récupère ses propres demandes de maintenance aussi
-            $maintenanceRequests = MaintenanceRequest::where('user_id', auth()->id())->latest()->get();
-        } elseif (auth()->user()->isLocataire()) {
-            $locataireId = auth()->user()->locataire->id ?? 0;
-            $query->whereHas('contrat', function($q) use ($locataireId) {
-                $q->where('locataire_id', $locataireId);
-            });
-        } elseif (auth()->user()->isAdmin()) {
-            // L'admin voit TOUT
+        if ($user->isProprietaire()) {
+            if (!$user->proprietaire) abort(403, 'Profil non configuré.');
+            $proprietaireId = $user->proprietaire->id;
+            $query->whereHas('contrat.bien', fn($q) => $q->where('proprietaire_id', $proprietaireId));
+            $maintenanceRequests = MaintenanceRequest::where('user_id', $user->id)->latest()->get();
+            
+        } elseif ($user->isLocataire()) {
+            $locataireId = $user->locataire->id ?? 0;
+            $query->whereHas('contrat', fn($q) => $q->where('locataire_id', $locataireId));
+            
+        } elseif ($user->isAdmin() || $user->isGestionnaire() || $user->isComptable()) {
+            // Le staff voit TOUT
             $maintenanceRequests = MaintenanceRequest::with('user')->latest()->get();
         }
 

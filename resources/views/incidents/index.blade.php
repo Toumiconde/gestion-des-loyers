@@ -30,8 +30,8 @@
 </div>
 
 <div x-data="{ tab: 'incidents' }" class="space-y-6">
-    {{-- Système d'onglets pour Admin et Proprio --}}
-    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'proprietaire')
+    {{-- Système d'onglets pour Admin, Proprio et Staff --}}
+    @if(in_array(auth()->user()->role, ['admin', 'proprietaire', 'gestionnaire', 'comptable']))
     <div class="flex items-center gap-2 p-1.5 bg-slate-200/50 rounded-2xl w-fit border border-slate-200">
         <button @click="tab = 'incidents'" 
                 :class="tab === 'incidents' ? 'bg-white shadow-md text-slate-900' : 'text-slate-500 hover:text-slate-700'"
