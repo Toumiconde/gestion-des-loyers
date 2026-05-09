@@ -13,7 +13,12 @@ class Document extends Model
         'type',
         'chemin',
         'taille_ko',
+        'viewed_at',
         'uploaded_by',
+    ];
+
+    protected $casts = [
+        'viewed_at' => 'datetime',
     ];
 
     // Relation polymorphique — ce document peut appartenir

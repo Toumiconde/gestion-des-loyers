@@ -120,7 +120,14 @@ class DocumentController extends Controller
     }
 
     public function create() { return view('documents.create'); }
-    public function show(Document $document) { return view('documents.show', compact('document')); }
+    public function show(Document $document) 
+    { 
+        // Si ce n'est pas l'uploader qui regarde, on marque comme vu
+        if ($document->uploaded_by !== auth()->id() && !$document->viewed_at) {
+            $document->update(['viewed_at' => now()]);
+        }
+        return view('documents.show', compact('document')); 
+    }
     public function edit(Document $document) { return view('documents.edit', compact('document')); }
     public function update(Request $request, Document $document) { abort(403); }
 }

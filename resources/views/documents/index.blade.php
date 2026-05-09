@@ -35,31 +35,36 @@
                     <td class="px-8 py-5">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
-                                @if(Str::endsWith($d->path, ['.pdf'])) <i class="fa-solid fa-file-pdf"></i>
-                                @elseif(Str::endsWith($d->path, ['.jpg', '.png', '.jpeg'])) <i class="fa-solid fa-file-image"></i>
+                                @if(Str::endsWith($d->chemin, ['.pdf'])) <i class="fa-solid fa-file-pdf"></i>
+                                @elseif(Str::endsWith($d->chemin, ['.jpg', '.png', '.jpeg', '.webp'])) <i class="fa-solid fa-file-image"></i>
                                 @else <i class="fa-solid fa-file-lines"></i> @endif
                             </div>
                             <div>
-                                <p class="font-black text-slate-800">{{ $d->nom }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-black text-slate-800">{{ $d->nom }}</p>
+                                    @if($d->viewed_at)
+                                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded-full">Consulté</span>
+                                    @endif
+                                </div>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ $d->type }}</p>
                             </div>
                         </div>
                     </td>
                     <td class="px-8 py-5">
-                        <span class="text-sm text-slate-600 font-medium capitalize">{{ $d->categorie ?: 'Divers' }}</span>
+                        <span class="text-xs text-slate-600 font-medium capitalize">{{ str_replace('_', ' ', $d->type) }}</span>
                     </td>
                     <td class="px-8 py-5 text-sm text-slate-500">
                         {{ $d->created_at->format('d/m/Y') }}
                     </td>
                     <td class="px-8 py-5">
-                        <span class="text-[10px] font-black text-slate-400 uppercase">{{ number_format($d->taille / 1024, 1) }} KB</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase">{{ $d->taille_ko ?? 0 }} KB</span>
                     </td>
                     <td class="px-8 py-5 text-right">
                         <div class="flex justify-end gap-2">
                             <a href="{{ route('documents.show', $d) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
-                            <a href="{{ Storage::url($d->path) }}" target="_blank" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
+                            <a href="{{ Storage::url($d->chemin) }}" target="_blank" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
                                 <i class="fa-solid fa-download text-sm"></i>
                             </a>
                         </div>
