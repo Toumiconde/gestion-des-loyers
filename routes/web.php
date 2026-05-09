@@ -67,8 +67,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // SUIVI (Incidents et Documents)
     Route::middleware('role:admin,gestionnaire')->group(function() {
-        Route::resource('incidents', IncidentController::class)->except(['index', 'show']);
+        Route::resource('incidents', IncidentController::class)->except(['index', 'show', 'create', 'store']);
         Route::resource('documents', DocumentController::class)->except(['index', 'show']);
+    });
+    
+    Route::middleware('role:admin,gestionnaire,locataire')->group(function() {
+        Route::get('/incidents/create', [IncidentController::class, 'create'])->name('incidents.create');
+        Route::post('/incidents', [IncidentController::class, 'store'])->name('incidents.store');
     });
     
     Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
