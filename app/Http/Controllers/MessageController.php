@@ -59,25 +59,31 @@ class MessageController extends Controller
         $receivers = collect();
 
         if ($user->role === 'locataire') {
-            // Un locataire peut écrire à son proprio ET à la gestion (Admin/Gestionnaire)
-            $adminGestionnaireIds = User::whereIn('role', ['admin', 'gestionnaire'])->pluck('id');
+            // Un locataire peut écrire à son proprio ET à la gestion (Admin/Gestionnaire/Comptable)
             $ownerIds = collect();
             if ($user->locataire) {
                 $ownerIds = $user->locataire->contrats->pluck('bien.proprietaire.user_id')->filter()->unique();
             }
-            $receivers = User::whereIn('id', $ownerIds->merge($adminGestionnaireIds))->where('id', '!=', $user->id)->get();
+            
+            $receivers = User::where(function($q) use ($ownerIds) {
+                $q->whereIn('role', ['admin', 'gestionnaire', 'comptable'])
+                  ->orWhereIn('id', $ownerIds);
+            })->where('id', '!=', $user->id)->get();
             
         } else if ($user->role === 'proprietaire') {
-            // Un proprio peut écrire à ses locataires ET à la gestion (Admin/Gestionnaire)
-            $adminGestionnaireIds = User::whereIn('role', ['admin', 'gestionnaire'])->pluck('id');
+            // Un proprio peut écrire à ses locataires ET à la gestion (Admin/Gestionnaire/Comptable)
             $locataireIds = collect();
             if ($user->proprietaire) {
-                $locataireIds = $user->proprietaire->biens->flatMap->contrats->pluck('locataire.user_id')->filter();
+                $locataireIds = $user->proprietaire->biens->flatMap->contrats->pluck('locataire.user_id')->filter()->unique();
             }
-            $receivers = User::whereIn('id', $locataireIds->merge($adminGestionnaireIds))->where('id', '!=', $user->id)->get();
+            
+            $receivers = User::where(function($q) use ($locataireIds) {
+                $q->whereIn('role', ['admin', 'gestionnaire', 'comptable'])
+                  ->orWhereIn('id', $locataireIds);
+            })->where('id', '!=', $user->id)->get();
             
         } else {
-            // Admin/Gestionnaire peut écrire à tout le monde
+            // Admin/Gestionnaire/Comptable peut écrire à tout le monde
             $receivers = User::where('id', '!=', $user->id)->get();
         }
 
