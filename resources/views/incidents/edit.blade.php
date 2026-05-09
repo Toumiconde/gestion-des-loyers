@@ -1,59 +1,115 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier l\'incident')
+@section('title', 'Gestion du Chantier de Maintenance')
 
 @section('content')
-<div class="bg-white rounded-xl shadow p-8 max-w-2xl">
-    <form method="POST" action="{{ route('incidents.update', $incident) }}">
-        @csrf @method('PUT')
 
-        <div class="grid grid-cols-1 gap-6">
-
-            <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-                <p><span class="font-medium">Contrat :</span> {{ $incident->contrat->numero_contrat }}</p>
-                <p><span class="font-medium">Bien :</span> {{ $incident->contrat->bien->libelle }}</p>
-                <p><span class="font-medium">Locataire :</span>
-                    {{ $incident->contrat->locataire->prenom }}
-                    {{ $incident->contrat->locataire->nom }}
-                </p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <select name="statut"
-                        class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required>
-                    @foreach(['ouvert' => 'Ouvert', 'en_cours' => 'En cours', 'resolu' => 'Résolu', 'ferme' => 'Fermé'] as $val => $label)
-                    <option value="{{ $val }}" {{ $incident->statut == $val ? 'selected' : '' }}>
-                        {{ $label }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Date de résolution
-                    <span class="text-gray-400 font-normal">(si résolu)</span>
-                </label>
-                <input type="date" name="date_resolution"
-                       value="{{ old('date_resolution', $incident->date_resolution?->format('Y-m-d')) }}"
-                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-        </div>
-
-        <div class="flex gap-3 mt-8">
-            <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                Mettre à jour
-            </button>
-            <a href="{{ route('incidents.show', $incident) }}"
-               class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200">
-                Annuler
+<div class="max-w-4xl mx-auto py-8">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <a href="{{ route('incidents.show', $incident) }}" class="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-arrow-left"></i> Retour aux détails
             </a>
+            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Pilotage du chantier</h2>
+            <p class="text-slate-500 font-medium">Mettez à jour le suivi technique et financier de l'incident</p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('incidents.update', $incident) }}" class="space-y-8">
+        @csrf
+        @method('PUT')
+
+        <div class="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    
+                    {{-- État & Intervenant --}}
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-list-check text-blue-600"></i>
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Suivi Technique</h3>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">État d'avancement</label>
+                            <select name="statut" required
+                                    class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none appearance-none cursor-pointer">
+                                @foreach(['ouvert' => 'Signalé', 'en_devis' => 'En Devis', 'en_travaux' => 'En Travaux', 'resolu' => 'Résolu (Travaux finis)', 'paye' => 'Payé (Clôture)'] as $val => $label)
+                                <option value="{{ $val }}" {{ old('statut', $incident->statut) == $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du Technicien / Entreprise</label>
+                            <input type="text" name="technicien_nom" value="{{ old('technicien_nom', $incident->technicien_nom) }}"
+                                   placeholder="Ex: Plomberie Moderne"
+                                   class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Téléphone Technicien</label>
+                            <input type="text" name="technicien_tel" value="{{ old('technicien_tel', $incident->technicien_tel) }}"
+                                   placeholder="+224 ..."
+                                   class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none">
+                        </div>
+                    </div>
+
+                    {{-- Budget & Finances --}}
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-coins text-emerald-600"></i>
+                            <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Budget & Paiement</h3>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Coût Estimé (Devis)</label>
+                            <input type="number" name="cout_estime" value="{{ old('cout_estime', $incident->cout_estime) }}"
+                                   class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-emerald-100 transition-all outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Coût Réel (Facturé)</label>
+                            <input type="number" name="cout_reel" value="{{ old('cout_reel', $incident->cout_reel) }}"
+                                   class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-rose-600 font-black text-xl focus:ring-4 focus:ring-rose-100 transition-all outline-none">
+                            <p class="mt-2 text-[10px] text-slate-400 font-medium italic">Note : Le coût réel sera automatiquement déduit de votre bénéfice net dès que l'incident passera en statut "Payé".</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Date de résolution</label>
+                            <input type="date" name="date_resolution" value="{{ old('date_resolution', $incident->date_resolution ? $incident->date_resolution->format('Y-m-d') : '') }}"
+                                   class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mt-12 flex items-center gap-4">
+                    <button type="submit"
+                            class="flex-1 h-16 bg-slate-900 text-white font-black rounded-2xl hover:bg-blue-600 shadow-xl shadow-slate-200 transition-all active:scale-95 uppercase tracking-widest text-xs">
+                        Enregistrer les modifications
+                        <i class="fa-solid fa-check-circle ml-2"></i>
+                    </button>
+                    <a href="{{ route('incidents.show', $incident) }}"
+                       class="px-8 h-16 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center uppercase tracking-widest text-xs">
+                        Annuler
+                    </a>
+                </div>
+            </div>
         </div>
 
+        <div class="p-8 bg-rose-50 rounded-[30px] border border-rose-100 flex gap-6">
+            <div class="w-12 h-12 shrink-0 rounded-2xl bg-white flex items-center justify-center text-rose-600 shadow-sm">
+                <i class="fa-solid fa-circle-exclamation text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-black text-rose-900 mb-1">Attention Automatique</h4>
+                <p class="text-xs text-rose-700/70 leading-relaxed">Le passage au statut <strong>"Payé"</strong> est irréversible en termes comptables. Il générera une dépense de catégorie 'maintenance' qui sera déduite de votre chiffre d'affaires mensuel.</p>
+            </div>
+        </div>
     </form>
 </div>
+
 @endsection

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contrat extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'numero_contrat',
         'bien_id',

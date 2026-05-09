@@ -51,7 +51,7 @@
         {{-- Paramètres suggérés --}}
         <div class="mt-6 bg-blue-50 rounded-lg p-4">
             <p class="text-sm font-medium text-blue-700 mb-2">
-                💡 Paramètres suggérés
+                 Paramètres suggérés
             </p>
             <div class="grid grid-cols-2 gap-2 text-xs text-blue-600">
                 <span>• devise → GNF</span>

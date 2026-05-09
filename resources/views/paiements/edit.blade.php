@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow p-8 max-w-xl text-center">
-    <div class="text-6xl mb-4">🔒</div>
+    <div class="text-6xl mb-4"></div>
     <h2 class="text-xl font-semibold text-gray-700 mb-2">
         Modification impossible
     </h2>

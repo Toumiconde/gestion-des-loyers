@@ -1,96 +1,174 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier le bien')
+@section('title', 'Modifier Bien Immobilier')
 
 @section('content')
-<div class="bg-white rounded-xl shadow p-8 max-w-2xl">
-    <form method="POST" action="{{ route('biens.update', $bien) }}">
-        @csrf @method('PUT')
 
-        <div class="grid grid-cols-1 gap-6">
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Libellé</label>
-                <input type="text" name="libelle"
-                       value="{{ old('libelle', $bien->libelle) }}"
-                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select name="type"
-                        class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @foreach(['appartement','maison','studio','bureau','commerce','autre'] as $type)
-                    <option value="{{ $type }}" {{ $bien->type == $type ? 'selected' : '' }}>
-                        {{ ucfirst($type) }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                <textarea name="adresse" rows="2"
-                          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('adresse', $bien->adresse) }}</textarea>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Surface (m²)</label>
-                    <input type="number" name="surface"
-                           value="{{ old('surface', $bien->surface) }}" step="0.01"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+<div class="max-w-4xl mx-auto py-8">
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li class="inline-flex items-center">
+                <a href="{{ route('dashboard') }}" class="text-slate-400 hover:text-blue-600 transition-colors">
+                    <i class="fa-solid fa-house mr-2"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                    <a href="{{ route('biens.index') }}" class="text-slate-400 hover:text-blue-600 transition-colors">Biens</a>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Loyer de base (GNF)</label>
-                    <input type="number" name="loyer_base"
-                           value="{{ old('loyer_base', $bien->loyer_base) }}"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           required>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                    <span class="text-slate-600">Modifier le bien</span>
                 </div>
-            </div>
+            </li>
+        </ol>
+    </nav>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Charges (GNF)</label>
-                    <input type="number" name="charges"
-                           value="{{ old('charges', $bien->charges) }}"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Dépôt de garantie (GNF)</label>
-                    <input type="number" name="depot_garantie"
-                           value="{{ old('depot_garantie', $bien->depot_garantie) }}"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
+            <div class="relative z-10">
+                <h2 class="text-3xl font-black mb-2">Modifier le bien</h2>
+                <p class="text-blue-100 italic">{{ $bien->libelle }}</p>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <select name="statut"
-                        class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @foreach(['disponible','occupe','en_travaux','archive'] as $statut)
-                    <option value="{{ $statut }}" {{ $bien->statut == $statut ? 'selected' : '' }}>
-                        {{ ucfirst(str_replace('_', ' ', $statut)) }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                Mettre à jour
-            </button>
-            <a href="{{ route('biens.index') }}"
-               class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200">
-                Annuler
-            </a>
-        </div>
+        <form method="POST" action="{{ route('biens.update', $bien) }}" class="p-8">
+            @csrf
+            @method('PUT')
 
-    </form>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {{-- Informations Générales --}}
+                <div class="space-y-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-info-circle text-blue-600"></i>
+                        <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Généralités</h3>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Propriétaire</label>
+                        <div class="relative">
+                            <select name="proprietaire_id" required
+                                    class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold">
+                                @foreach($proprietaires as $p)
+                                <option value="{{ $p->id }}" {{ old('proprietaire_id', $bien->proprietaire_id) == $p->id ? 'selected' : '' }}>
+                                    {{ $p->user->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <i class="fa-solid fa-user-tie absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Libellé du bien</label>
+                        <div class="relative">
+                            <input type="text" name="libelle" value="{{ old('libelle', $bien->libelle) }}"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                   required>
+                            <i class="fa-solid fa-tag absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Type de bien</label>
+                        <div class="relative">
+                            <select name="type" required
+                                    class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold">
+                                @foreach(['appartement','maison','studio','bureau','commerce','autre'] as $type)
+                                <option value="{{ $type }}" {{ old('type', $bien->type) == $type ? 'selected' : '' }}>
+                                    {{ ucfirst($type) }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <i class="fa-solid fa-house-chimney absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Adresse exacte</label>
+                        <div class="relative">
+                            <textarea name="adresse" rows="2" required
+                                      class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">{{ old('adresse', $bien->adresse) }}</textarea>
+                            <i class="fa-solid fa-map-location-dot absolute left-4 top-4 text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Spécifications financières --}}
+                <div class="space-y-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-coins text-emerald-600"></i>
+                        <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Aspects Financiers</h3>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Surface (m²)</label>
+                            <div class="relative">
+                                <input type="number" name="surface" value="{{ old('surface', $bien->surface) }}" step="0.01"
+                                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                <i class="fa-solid fa-maximize absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Loyer Base (GNF)</label>
+                            <div class="relative">
+                                <input type="number" name="loyer_base" value="{{ old('loyer_base', $bien->loyer_base) }}" required
+                                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                <i class="fa-solid fa-money-bill-1 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Charges (GNF)</label>
+                            <div class="relative">
+                                <input type="number" name="charges" value="{{ old('charges', $bien->charges) }}"
+                                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                <i class="fa-solid fa-bolt absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Garantie (GNF)</label>
+                            <div class="relative">
+                                <input type="number" name="depot_garantie" value="{{ old('depot_garantie', $bien->depot_garantie) }}"
+                                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                <i class="fa-solid fa-shield-halved absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 p-6 rounded-2xl border border-amber-100 mt-4">
+                        <div class="flex items-start gap-4 text-amber-800">
+                            <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                            <p class="text-xs font-medium leading-relaxed">
+                                Attention : Modifier le loyer de base n'affecte pas les contrats en cours, seulement les nouveaux contrats créés à partir de maintenant.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex items-center gap-4 mt-12 pt-8 border-t border-slate-100">
+                <button type="submit"
+                        class="px-10 py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95">
+                    Mettre à jour le bien
+                </button>
+                <a href="{{ route('biens.index') }}"
+                   class="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                    Annuler
+                </a>
+            </div>
+
+        </form>
+    </div>
 </div>
+
 @endsection

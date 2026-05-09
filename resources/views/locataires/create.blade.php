@@ -1,78 +1,136 @@
 @extends('layouts.app')
 
-@section('title', 'Nouveau locataire')
+@section('title', 'Nouveau Locataire')
 
 @section('content')
-<div class="bg-white rounded-xl shadow p-8 max-w-2xl">
-    <form method="POST" action="{{ route('locataires.store') }}">
-        @csrf
 
-        <div class="grid grid-cols-1 gap-6">
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                    <input type="text" name="prenom" value="{{ old('prenom') }}"
-                           placeholder="Ex: Mamadou"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           required>
-                    @error('prenom')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+<div class="max-w-4xl mx-auto py-8">
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li class="inline-flex items-center">
+                <a href="{{ route('dashboard') }}" class="text-slate-400 hover:text-blue-600 transition-colors">
+                    <i class="fa-solid fa-house mr-2"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                    <a href="{{ route('locataires.index') }}" class="text-slate-400 hover:text-blue-600 transition-colors">Locataires</a>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                    <input type="text" name="nom" value="{{ old('nom') }}"
-                           placeholder="Ex: Diallo"
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           required>
-                    @error('nom')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                    <span class="text-slate-600">Ajouter un locataire</span>
                 </div>
-            </div>
+            </li>
+        </ol>
+    </nav>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}"
-                       placeholder="Ex: mamadou@email.com"
-                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-700 p-8 text-white relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
+            <div class="relative z-10 text-center md:text-left">
+                <h2 class="text-3xl font-black mb-2">Nouveau locataire</h2>
+                <p class="text-purple-100">Enregistrez les informations personnelles du futur occupant.</p>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                <input type="text" name="telephone" value="{{ old('telephone') }}"
-                       placeholder="Ex: 622 00 00 00"
-                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                <textarea name="adresse" rows="2"
-                          placeholder="Ex: Ratoma, Conakry"
-                          class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('adresse') }}</textarea>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Pièce d'identité</label>
-                <input type="text" name="piece_identite" value="{{ old('piece_identite') }}"
-                       placeholder="Ex: CNI-001234"
-                       class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                Enregistrer
-            </button>
-            <a href="{{ route('locataires.index') }}"
-               class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200">
-                Annuler
-            </a>
-        </div>
+        <form method="POST" action="{{ route('locataires.store') }}" class="p-8">
+            @csrf
 
-    </form>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {{-- Identité --}}
+                <div class="space-y-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-user-circle text-purple-600"></i>
+                        <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">État Civil</h3>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Prénom</label>
+                            <input type="text" name="prenom" value="{{ old('prenom') }}"
+                                   placeholder="Ex: Mamadou"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold"
+                                   required>
+                            @error('prenom') <p class="text-rose-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Nom</label>
+                            <input type="text" name="nom" value="{{ old('nom') }}"
+                                   placeholder="Ex: Diallo"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold"
+                                   required>
+                            @error('nom') <p class="text-rose-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">N° Pièce d'identité</label>
+                        <div class="relative">
+                            <input type="text" name="piece_identite" value="{{ old('piece_identite') }}"
+                                   placeholder="Ex: CNI-001234"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold">
+                            <i class="fa-solid fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Contact --}}
+                <div class="space-y-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-address-book text-emerald-600"></i>
+                        <h3 class="font-black text-slate-800 uppercase tracking-widest text-sm">Contact</h3>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Adresse Email</label>
+                        <div class="relative">
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                   placeholder="Ex: mamadou@email.com"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold">
+                            <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Téléphone</label>
+                        <div class="relative">
+                            <input type="text" name="telephone" value="{{ old('telephone') }}"
+                                   placeholder="Ex: 622 00 00 00"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold">
+                            <i class="fa-solid fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Adresse actuelle</label>
+                        <div class="relative">
+                            <textarea name="adresse" rows="1"
+                                      placeholder="Ex: Ratoma, Conakry"
+                                      class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold">{{ old('adresse') }}</textarea>
+                            <i class="fa-solid fa-map-location-dot absolute left-4 top-4 text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex items-center gap-4 mt-12 pt-8 border-t border-slate-100">
+                <button type="submit"
+                        class="px-10 py-4 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all active:scale-95">
+                    Enregistrer le locataire
+                </button>
+                <a href="{{ route('locataires.index') }}"
+                   class="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                    Annuler
+                </a>
+            </div>
+
+        </form>
+    </div>
 </div>
+
 @endsection

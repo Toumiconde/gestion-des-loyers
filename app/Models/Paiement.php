@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Paiement extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'contrat_id',
         'mois_concerne',
@@ -17,6 +19,7 @@ class Paiement extends Model
         'penalite',
         'notes',
         'created_by',
+        'preuve_paiement',
     ];
 
     protected $casts = [

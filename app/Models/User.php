@@ -6,16 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role',       // admin, proprietaire, gestionnaire, locataire, comptable
-        'is_active',  // compte actif ou désactivé
+        'role',                  // admin, proprietaire, gestionnaire, locataire, comptable
+        'is_active',             // compte actif ou désactivé
+        'onboarding_completed',  // a choisi son rôle via l'onboarding
+        'google_id',
+        'avatar',
+        'google_token',
+        'google_refresh_token',
     ];
 
     protected $hidden = [
@@ -26,9 +33,10 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
+            'email_verified_at'      => 'datetime',
+            'password'               => 'hashed',
+            'is_active'              => 'boolean',
+            'onboarding_completed'   => 'boolean',
         ];
     }
 

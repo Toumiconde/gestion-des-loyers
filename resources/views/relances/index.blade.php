@@ -1,65 +1,78 @@
 @extends('layouts.app')
 
-@section('title', 'Relances')
+@section('title', 'Suivi des Relances')
 
 @section('content')
-<div class="bg-white rounded-xl shadow overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-            <tr>
-                <th class="px-6 py-3 text-left">Contrat</th>
-                <th class="px-6 py-3 text-left">Locataire</th>
-                <th class="px-6 py-3 text-left">Niveau</th>
-                <th class="px-6 py-3 text-left">Canal</th>
-                <th class="px-6 py-3 text-left">Statut</th>
-                <th class="px-6 py-3 text-left">Date envoi</th>
-                <th class="px-6 py-3 text-left">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            @forelse($relances as $r)
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 font-medium">{{ $r->contrat->numero_contrat }}</td>
-                <td class="px-6 py-4">
-                    {{ $r->contrat->locataire->prenom }}
-                    {{ $r->contrat->locataire->nom }}
-                </td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded text-xs
-                        {{ $r->niveau === 'niveau_1' ? 'bg-yellow-100 text-yellow-700' :
-                           ($r->niveau === 'niveau_2' ? 'bg-orange-100 text-orange-700' :
-                           'bg-red-100 text-red-700') }}">
-                        {{ ucfirst(str_replace('_', ' ', $r->niveau)) }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 capitalize">
-                    {{ str_replace('_', ' + ', $r->canal) }}
-                </td>
-                <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded text-xs
-                        {{ $r->statut === 'envoyee' ? 'bg-blue-100 text-blue-700' :
-                           ($r->statut === 'acquittee' ? 'bg-green-100 text-green-700' :
-                           'bg-red-100 text-red-700') }}">
-                        {{ ucfirst($r->statut) }}
-                    </span>
-                </td>
-                <td class="px-6 py-4">
-                    {{ $r->date_envoi->format('d/m/Y') }}
-                </td>
-                <td class="px-6 py-4">
-                    <a href="{{ route('relances.show', $r) }}"
-                       class="text-blue-600 hover:underline">Voir</a>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="7" class="px-6 py-8 text-center text-gray-400">
-                    Aucune relance envoyée.
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
-    <div class="px-6 py-4">{{ $relances->links() }}</div>
+
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+        <h2 class="text-3xl font-black text-slate-800">Relances de Paiement</h2>
+        <p class="text-slate-500 font-medium">Historique des rappels envoyés aux retardataires</p>
+    </div>
+    
+    <a href="{{ route('relances.create') }}" 
+       class="inline-flex items-center justify-center px-6 py-3.5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95 group">
+        <i class="fa-solid fa-paper-plane mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+        Nouvelle relance
+    </a>
 </div>
+
+<div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest font-black">
+                    <th class="px-8 py-5">Date & Type</th>
+                    <th class="px-8 py-5">Locataire</th>
+                    <th class="px-8 py-5">Bien</th>
+                    <th class="px-8 py-5">Statut</th>
+                    <th class="px-8 py-5 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($relances as $r)
+                <tr class="hover:bg-slate-50/50 transition-colors group">
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                @if($r->type == 'email') <i class="fa-solid fa-envelope"></i>
+                                @else <i class="fa-solid fa-file-pdf"></i> @endif
+                            </div>
+                            <div>
+                                <p class="font-black text-slate-800">{{ $r->created_at->format('d/m/Y') }}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ $r->type }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-8 py-5">
+                        <span class="font-bold text-slate-700">{{ $r->contrat->locataire->prenom }} {{ $r->contrat->locataire->nom }}</span>
+                    </td>
+                    <td class="px-8 py-5 text-sm text-slate-500">
+                        {{ $r->contrat->bien->libelle }}
+                    </td>
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase {{ $r->statut === 'envoye' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                            {{ $r->statut }}
+                        </span>
+                    </td>
+                    <td class="px-8 py-5 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{{ route('relances.show', $r) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                                <i class="fa-solid fa-eye text-sm"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="px-8 py-20 text-center text-slate-400 italic">
+                        Aucune relance envoyée.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 @endsection

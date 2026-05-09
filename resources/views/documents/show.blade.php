@@ -1,81 +1,110 @@
 @extends('layouts.app')
 
-@section('title', 'Document — ' . $document->nom)
+@section('title', 'Détails du Document')
 
 @section('content')
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-    {{-- Détails document --}}
-    <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Informations</h2>
-        <dl class="space-y-3 text-sm">
-            <div>
-                <dt class="text-gray-400">Nom</dt>
-                <dd class="font-medium">{{ $document->nom }}</dd>
-            </div>
-            <div>
-                <dt class="text-gray-400">Type</dt>
-                <dd>
-                    <span class="px-2 py-1 rounded text-xs
-                        {{ $document->type === 'contrat_pdf' ? 'bg-blue-100 text-blue-700' :
-                           ($document->type === 'quittance' ? 'bg-green-100 text-green-700' :
-                           ($document->type === 'photo' ? 'bg-purple-100 text-purple-700' :
-                           ($document->type === 'piece_identite' ? 'bg-yellow-100 text-yellow-700' :
-                           'bg-gray-100 text-gray-600'))) }}">
-                        {{ ucfirst(str_replace('_', ' ', $document->type)) }}
-                    </span>
-                </dd>
-            </div>
-            <div>
-                <dt class="text-gray-400">Taille</dt>
-                <dd>{{ $document->taille_ko ? $document->taille_ko . ' Ko' : '—' }}</dd>
-            </div>
-            <div>
-                <dt class="text-gray-400">Uploadé par</dt>
-                <dd>{{ $document->uploadedBy?->name ?? '—' }}</dd>
-            </div>
-            <div>
-                <dt class="text-gray-400">Date d'upload</dt>
-                <dd>{{ $document->created_at->format('d/m/Y à H:i') }}</dd>
-            </div>
-        </dl>
-
-        <div class="flex gap-3 mt-6">
-            <a href="{{ asset('storage/' . $document->chemin) }}"
-               target="_blank"
-               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
-                📄 Ouvrir le fichier
-            </a>
-            <a href="{{ asset('storage/' . $document->chemin) }}"
+<div class="max-w-6xl mx-auto py-8">
+    {{-- Fil d'ariane --}}
+    <div class="flex items-center justify-between mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                <li class="inline-flex items-center">
+                    <a href="{{ route('dashboard') }}" class="text-slate-400 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-house mr-2"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                        <a href="{{ route('documents.index') }}" class="text-slate-400 hover:text-blue-600 transition-colors">Documents</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                        <span class="text-slate-600">Visualisation</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="flex gap-3">
+            <a href="{{ Storage::url($document->chemin ?? $document->path) }}" 
                download="{{ $document->nom }}"
-               class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm">
-                ⬇️ Télécharger
+               class="px-5 py-2.5 bg-emerald-50 text-emerald-600 font-bold rounded-xl hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2 shadow-sm shadow-emerald-100">
+                <i class="fa-solid fa-download"></i> Télécharger
             </a>
+            <form action="{{ route('documents.destroy', $document) }}" method="POST" onsubmit="return confirm('Supprimer ce document ?')" class="inline">
+                @csrf @method('DELETE')
+                <button type="submit" class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
+            </form>
         </div>
     </div>
 
-    {{-- Aperçu --}}
-    <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Aperçu</h2>
-        @php
-            $ext = pathinfo($document->chemin, PATHINFO_EXTENSION);
-        @endphp
-
-        @if(in_array(strtolower($ext), ['jpg', 'jpeg', 'png']))
-            <img src="{{ asset('storage/' . $document->chemin) }}"
-                 alt="{{ $document->nom }}"
-                 class="w-full rounded-lg border">
-        @elseif(strtolower($ext) === 'pdf')
-            <iframe src="{{ asset('storage/' . $document->chemin) }}"
-                    class="w-full h-96 rounded-lg border">
-            </iframe>
-        @else
-            <div class="bg-gray-50 rounded-lg p-8 text-center text-gray-400">
-                <p class="text-4xl mb-2">📄</p>
-                <p class="text-sm">Aperçu non disponible pour ce type de fichier.</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {{-- Détails --}}
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <div class="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mb-6 shadow-sm border border-blue-100/50">
+                    @php $ext = pathinfo($document->chemin ?? $document->path, PATHINFO_EXTENSION); @endphp
+                    @if(strtolower($ext) === 'pdf') <i class="fa-solid fa-file-pdf"></i>
+                    @elseif(in_array(strtolower($ext), ['jpg', 'jpeg', 'png'])) <i class="fa-solid fa-file-image"></i>
+                    @else <i class="fa-solid fa-file-lines"></i> @endif
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 break-words mb-2">{{ $document->nom }}</h2>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">{{ $document->type }}</p>
+                
+                <div class="mt-8 space-y-6 pt-8 border-t border-slate-50">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Taille</span>
+                        <span class="font-bold text-slate-700">{{ number_format(($document->taille_ko ?? $document->taille / 1024), 1) }} KB</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Ajouté par</span>
+                        <span class="font-bold text-slate-700">{{ $document->uploadedBy?->name ?? 'Système' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Le</span>
+                        <span class="font-bold text-slate-700">{{ $document->created_at->format('d/m/Y à H:i') }}</span>
+                    </div>
+                </div>
             </div>
-        @endif
-    </div>
 
+            <div class="bg-blue-900 rounded-3xl p-8 text-white relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full"></div>
+                <h3 class="text-lg font-black mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-blue-400"></i> Stockage Sécurisé
+                </h3>
+                <p class="text-blue-300 text-sm leading-relaxed">Ce document est chiffré et stocké de manière sécurisée. Seuls les administrateurs et les parties autorisées peuvent y accéder.</p>
+            </div>
+        </div>
+
+        {{-- Aperçu --}}
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 min-h-[600px] flex items-center justify-center">
+                @if(in_array(strtolower($ext), ['jpg', 'jpeg', 'png']))
+                    <img src="{{ Storage::url($document->chemin ?? $document->path) }}" class="max-w-full rounded-2xl shadow-lg border border-slate-100">
+                @elseif(strtolower($ext) === 'pdf')
+                    <iframe src="{{ Storage::url($document->chemin ?? $document->path) }}" class="w-full h-[800px] rounded-2xl border-0"></iframe>
+                @else
+                    <div class="text-center p-20">
+                        <div class="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-eye-slash text-slate-200 text-4xl"></i>
+                        </div>
+                        <h4 class="text-xl font-black text-slate-800 mb-2">Aperçu indisponible</h4>
+                        <p class="text-slate-400 text-sm max-w-xs mx-auto">Le format de ce fichier ne permet pas un aperçu direct. Veuillez le télécharger pour le consulter.</p>
+                        <a href="{{ Storage::url($document->chemin ?? $document->path) }}" download class="mt-8 inline-flex items-center gap-2 text-blue-600 font-black hover:underline">
+                            <i class="fa-solid fa-download"></i> Télécharger maintenant
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
+
 @endsection

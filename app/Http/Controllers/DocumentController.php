@@ -10,7 +10,68 @@ class DocumentController extends Controller
 {
     public function index()
     {
-        $documents = Document::with('uploadedBy')->paginate(10);
+        $user  = auth()->user();
+        $query = Document::with('uploadedBy');
+
+        if ($user->isLocataire()) {
+
+            if (!$user->locataire) {
+                // Aucun profil locataire lié → aucun document
+                $documents = collect();
+                return view('documents.index', compact('documents'));
+            }
+
+            $locataireId = $user->locataire->id;
+            $contratIds  = $user->locataire->contrats->pluck('id');
+
+            // Le locataire ne voit QUE :
+            //  - les documents attachés directement à son profil Locataire
+            //  - les documents attachés à SES contrats
+            //  - les fichiers qu'il a lui-même uploadés
+            $query->where(function ($q) use ($locataireId, $contratIds, $user) {
+                $q->where(function ($q2) use ($locataireId) {
+                    $q2->where('documentable_type', 'App\\Models\\Locataire')
+                       ->where('documentable_id', $locataireId);
+                })
+                ->orWhere(function ($q2) use ($contratIds) {
+                    $q2->where('documentable_type', 'App\\Models\\Contrat')
+                       ->whereIn('documentable_id', $contratIds);
+                })
+                ->orWhere('uploaded_by', $user->id);
+            });
+
+        } elseif ($user->isProprietaire()) {
+
+            if (!$user->proprietaire) {
+                $documents = collect();
+                return view('documents.index', compact('documents'));
+            }
+
+            $proprietaireId = $user->proprietaire->id;
+            $bienIds        = $user->proprietaire->biens->pluck('id');
+            $contratIds     = \App\Models\Contrat::whereIn('bien_id', $bienIds)->pluck('id');
+
+            // Le propriétaire voit les docs de ses biens, ses contrats, et ses uploads
+            $query->where(function ($q) use ($proprietaireId, $bienIds, $contratIds, $user) {
+                $q->where(function ($q2) use ($proprietaireId) {
+                    $q2->where('documentable_type', 'App\\Models\\Proprietaire')
+                       ->where('documentable_id', $proprietaireId);
+                })
+                ->orWhere(function ($q2) use ($bienIds) {
+                    $q2->where('documentable_type', 'App\\Models\\Bien')
+                       ->whereIn('documentable_id', $bienIds);
+                })
+                ->orWhere(function ($q2) use ($contratIds) {
+                    $q2->where('documentable_type', 'App\\Models\\Contrat')
+                       ->whereIn('documentable_id', $contratIds);
+                })
+                ->orWhere('uploaded_by', $user->id);
+            });
+        }
+
+        // Admin & Gestionnaire → voient tout, pas de filtre
+
+        $documents = $query->latest()->paginate(15);
         return view('documents.index', compact('documents'));
     }
 

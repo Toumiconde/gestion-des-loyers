@@ -25,6 +25,21 @@ class ActivityLog extends Model
     // Quel user a fait cette action
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    /**
+     * Helper pour logger une activité
+     */
+    public static function log($action, $details = null, $model = null)
+    {
+        return self::create([
+            'user_id'     => auth()->id() ?? 1, // Fallback admin si non auth (rare)
+            'action'      => $action,
+            'details'     => is_string($details) ? ['message' => $details] : $details,
+            'model_type'  => $model ? get_class($model) : null,
+            'model_id'    => $model ? $model->id : null,
+            'ip_address'  => request()->ip(),
+        ]);
     }
 }

@@ -1,0 +1,56 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Times New Roman;}{\f1 Arial;}}
+{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red51\green51\blue51;}
+\viewkind4\uc1
+\pard\f1\fs32\b\qc CAHIER DES CHARGES PROFESSIONNEL\par
+PROJET : GESTLOYER\par
+\fs24\b0\par
+\pard\f1\fs20\ql
+\b 1. PR\'c9SENTATION DU PROJET\b0\par
+GESTLOYER est une plateforme web de gestion locative de haute pr\'e9cision, con\'e7ue pour automatiser les processus administratifs, financiers et techniques d'une agence immobili\'e8re ou d'un gestionnaire de patrimoine. Le système centralise la gestion des biens, des contrats, des encaissements et de la communication avec les parties prenantes.\par
+\par
+\b 2. STACK TECHNOLOGIQUE\b0\par
+- \b Backend :\b0  Laravel 11.x (PHP 8.2+)\par
+- \b Frontend :\b0  Tailwind CSS (Styling), Alpine.js (Interactivit\'e9)\par
+- \b Base de donn\'e9es :\b0  MySQL 8.0\par
+- \b Reporting :\b0  DomPDF (G\'e9n\'e9ration de quittances/bilans)\par
+- \b Graphiques :\b0  Chart.js (Visualisation de donn\'e9es)\par
+\par
+\b 3. R\'d4LES ET PERMISSIONS (RBAC)\b0\par
+Le système g\'e8re 5 r\'f4les distincts :\par
+- \b Administrateur :\b0  Contr\'f4le total, param\'e9trage agence, gestion des comptes staff.\par
+- \b Gestionnaire :\b0  Gestion op\'e9rationnelle (biens, contrats, locataires, maintenance).\par
+- \b Propri\'e9taire :\b0  Consultation des revenus, t\'e9l\'e9chargement des bilans de gestion mensuels.\par
+- \b Locataire :\b0  Signalement d'incidents, d\'e9claration de paiement, acc\'e8s aux quittances.\par
+- \b Comptable :\b0  Validation des flux financiers et g\'e9n\'e9ration des quittances.\par
+\par
+\b 4. ARCHITECTURE DE LA BASE DE DONN\'c9ES\b0\par
+\b Tables principales :\b0\par
+- \b users :\b0  Identifiants et r\'f4les.\par
+- \b proprietaires / locataires :\b0  Profils sp\'e9cifiques li\'e9s aux users.\par
+- \b biens :\b0  Patrimoine immobilier (statut, prix, photos).\par
+- \b contrats :\b0  Baux liant un locataire \'e0 un bien.\par
+- \b paiements :\b0  Suivi des mensualit\'e9s et ventilation annuelle.\par
+- \b quittances :\b0  Documents officiels g\'e9n\'e9r\'e9s post-paiement.\par
+- \b incidents :\b0  Gestion du SAV technique (maintenance).\par
+- \b messages :\b0  Système de communication interne avec filtres d'urgence.\par
+- \b activity_logs :\b0  Historique complet des actions (Audit).\par
+- \b parametres :\b0  Configuration globale (Logo, Signature, Coordonn\'e9es).\par
+\par
+\b 5. DIAGRAMME DE CLASSES (UML Logic)\b0\par
+- Un \b User\b0  poss\'e8de un \b Propri\'e9taire\b0  ou un \b Locataire\b0 .\par
+- Un \b Propri\'e9taire\b0  poss\'e8de plusieurs \b Biens\b0 .\par
+- Un \b Bien\b0  est lou\'e9 via un \b Contrat\b0 .\par
+- Un \b Contrat\b0  g\'e9n\'e8re plusieurs \b Paiements\b0 .\par
+- Un \b Paiement\b0  est certifi\'e9 par une \b Quittance\b0 .\par
+- Un \b Locataire\b0  peut d\'e9clarer plusieurs \b Incidents\b0  sur un \b Bien\b0 .\par
+\par
+\b 6. FONCTIONNALIT\'c9S CL\'c9S\b0\par
+- \b Ventilation Annuelle :\b0  D\'e9coupage automatique des paiements annuels en 12 mois financiers.\par
+- \b Audit ActivityLog :\b0  Tra\'e7abilit\'e9 de chaque modification (Ancienne vs Nouvelle valeur).\par
+- \b Impression A4 :\b0  Design haute fid\'e9lit\'e9 pour les quittances (Original + Copie).\par
+- \b Intelligence de Messagerie :\b0  Tagging automatique "URGENT" sur les mots-cl\'e9s critiques.\par
+\par
+\b 7. CONCLUSION\b0\par
+GESTLOYER r\'e9pond aux exigences modernes de la gestion immobili\'e8re en offrant une interface premium et une robustesse technique garantissant la p\'e9rennit\'e9 des donn\'e9es.\par
+}
