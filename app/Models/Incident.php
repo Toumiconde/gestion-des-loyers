@@ -26,6 +26,7 @@ class Incident extends Model
 
     protected $casts = [
         'date_resolution' => 'date',
+        'is_new'          => 'boolean',
     ];
 
     // Un incident appartient à un contrat

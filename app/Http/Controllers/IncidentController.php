@@ -140,7 +140,8 @@ class IncidentController extends Controller
 
         // Marquer comme vu dès qu'un membre du staff ouvre la fiche
         if ($incident->is_new && ($user->isAdmin() || $user->isGestionnaire() || $user->isComptable())) {
-            $incident->update(['is_new' => false]);
+            $incident->is_new = false;
+            $incident->save();
         }
 
         $incident->load('contrat.locataire', 'contrat.bien', 'declarePar');

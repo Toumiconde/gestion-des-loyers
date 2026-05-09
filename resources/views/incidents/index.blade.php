@@ -88,9 +88,19 @@
                                     <span class="text-xs font-black text-rose-600 uppercase tracking-widest">Nouveau</span>
                                 </div>
                             @else
+                                @php
+                                    $statusConfig = [
+                                        'ouvert'     => ['dot' => 'bg-emerald-500', 'text' => 'text-emerald-700', 'label' => 'Ouvert'],
+                                        'en_devis'   => ['dot' => 'bg-purple-500',  'text' => 'text-purple-700',  'label' => 'En devis'],
+                                        'en_travaux' => ['dot' => 'bg-amber-500',   'text' => 'text-amber-700',   'label' => 'En travaux'],
+                                        'resolu'     => ['dot' => 'bg-blue-500',    'text' => 'text-blue-700',    'label' => 'Résolu'],
+                                        'paye'       => ['dot' => 'bg-slate-400',   'text' => 'text-slate-500',   'label' => 'Payé & Clos'],
+                                    ];
+                                    $cfg = $statusConfig[$i->statut] ?? ['dot' => 'bg-slate-400', 'text' => 'text-slate-500', 'label' => ucfirst($i->statut)];
+                                @endphp
                                 <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full {{ $i->statut === 'resolu' ? 'bg-emerald-500' : ($i->statut === 'paye' ? 'bg-blue-500' : ($i->statut === 'en_travaux' ? 'bg-amber-500' : ($i->statut === 'en_devis' ? 'bg-purple-500' : 'bg-rose-500'))) }}"></div>
-                                    <span class="text-xs font-black text-slate-700 capitalize">{{ str_replace('_', ' ', $i->statut) }}</span>
+                                    <div class="w-2 h-2 rounded-full {{ $cfg['dot'] }}"></div>
+                                    <span class="text-xs font-black {{ $cfg['text'] }} capitalize">{{ $cfg['label'] }}</span>
                                 </div>
                             @endif
                         </td>
