@@ -277,35 +277,43 @@
 
         {{-- LISTES ET LOGS --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {{-- Derniers Paiements --}}
+            {{-- Propriétaires Récents --}}
+            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'gestionnaire')
             <div class="bg-white rounded-[50px] p-12 border border-slate-100 shadow-sm">
-                <h3 class="text-xl font-black text-slate-800 mb-8">Derniers Encaissements</h3>
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-black text-slate-800">Propriétaires Récents</h3>
+                    <a href="{{ route('proprietaires.index') }}" class="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Voir tout</a>
+                </div>
                 <div class="space-y-6">
-                    @forelse($stats['derniers_paiements'] as $p)
+                    @forelse($stats['recent_proprietaires'] as $p)
                     <div class="flex items-center justify-between p-4 bg-slate-50 rounded-[30px] hover:bg-blue-50 transition-all group">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-all">
-                                <i class="fa-solid fa-money-bill-wave text-blue-600"></i>
+                                <i class="fa-solid fa-user-shield text-blue-600"></i>
                             </div>
                             <div>
-                                <p class="font-black text-slate-800 text-sm">{{ $p->contrat->locataire->nom_complet }}</p>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase">{{ $p->contrat->bien->libelle }}</p>
+                                <p class="font-black text-slate-800 text-sm">{{ $p->user->name ?? 'N/A' }}</p>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase">{{ $p->telephone ?: 'Aucun tel' }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="font-black text-blue-600">{{ number_format($p->montant, 0, ',', ' ') }} <span class="text-[8px]">GNF</span></p>
-                            <p class="text-[9px] text-slate-400 font-bold uppercase">{{ Carbon\Carbon::parse($p->mois_concerne)->locale('fr')->isoFormat('MMM YYYY') }}</p>
+                            <p class="font-black text-slate-800 text-sm">{{ $p->biens_count ?? $p->biens->count() }} Biens</p>
+                            <a href="{{ route('proprietaires.show', $p) }}" class="text-[8px] text-blue-600 font-black uppercase hover:underline">Détails</a>
                         </div>
                     </div>
                     @empty
-                    <p class="text-slate-400 italic text-center py-8">Aucun paiement enregistré.</p>
+                    <p class="text-slate-400 italic text-center py-8">Aucun propriétaire.</p>
                     @endforelse
                 </div>
             </div>
+            @endif
 
-            {{-- Mes Locataires --}}
+            {{-- Mes Locataires Récents --}}
             <div class="bg-white rounded-[50px] p-12 border border-slate-100 shadow-sm">
-                <h3 class="text-xl font-black text-slate-800 mb-8">Mes Locataires</h3>
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-black text-slate-800">Locataires Récents</h3>
+                    <a href="{{ route('locataires.index') }}" class="text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline">Voir tout</a>
+                </div>
                 <div class="space-y-6">
                     @forelse($stats['locataires_liste'] as $l)
                     <div class="flex items-center justify-between p-4 bg-slate-50 rounded-[30px] hover:bg-purple-50 transition-all group">
@@ -332,83 +340,85 @@
             </div>
         </div>
 
-            {{-- Vos Relevés de Gestion (PROPRIÉTAIRE SEULEMENT) --}}
-            @if(auth()->user()->role === 'proprietaire')
-            <div class="bg-slate-900 rounded-[50px] p-12 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group mb-8 lg:col-span-2">
-                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-white/5 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 class="text-2xl font-black">Relevés de Gestion Officiels</h3>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Archives financières certifiées par l'agence</p>
-                        </div>
-                        <i class="fa-solid fa-file-shield text-4xl text-blue-500"></i>
+        {{-- Vos Relevés de Gestion (PROPRIÉTAIRE SEULEMENT) --}}
+        @if(auth()->user()->role === 'proprietaire')
+        <div class="bg-slate-900 rounded-[50px] p-12 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group mb-12">
+            <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-white/5 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black">Relevés de Gestion Officiels</h3>
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Archives financières certifiées par l'agence</p>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <i class="fa-solid fa-file-shield text-4xl text-blue-500"></i>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    @php
+                        $currentMonthNum = date('n');
+                        $currentYearNum = date('Y');
+                        $selectedYearNum = $stats['selected_year'];
+                    @endphp
+                    @for($m = 1; $m <= 12; $m++)
                         @php
-                            $currentMonthNum = date('n');
-                            $currentYearNum = date('Y');
-                            $selectedYearNum = $stats['selected_year'];
+                            $bilan = $stats['bilans_officiels'][$m] ?? null;
+                            $isFuture = ($selectedYearNum > $currentYearNum) || ($selectedYearNum == $currentYearNum && $m > $currentMonthNum);
+                            $isCurrent = ($selectedYearNum == $currentYearNum && $m == $currentMonthNum);
                         @endphp
-                        @for($m = 1; $m <= 12; $m++)
-                            @php
-                                $bilan = $stats['bilans_officiels'][$m] ?? null;
-                                $isFuture = ($selectedYearNum > $currentYearNum) || ($selectedYearNum == $currentYearNum && $m > $currentMonthNum);
-                                $isCurrent = ($selectedYearNum == $currentYearNum && $m == $currentMonthNum);
-                            @endphp
 
-                            @if($bilan)
-                                <a href="{{ route('reports.monthly', ['year' => $selectedYearNum, 'month' => $m]) }}" 
-                                   class="flex flex-col items-center p-4 bg-white/10 rounded-2xl hover:bg-blue-600 transition-all border border-white/10 group/item shadow-lg">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">{{ $stats['months'][$m] }}</span>
-                                    <i class="fa-solid fa-cloud-arrow-down mt-2 text-white text-lg group-hover/item:translate-y-1 transition-transform"></i>
-                                    <span class="text-[8px] font-black mt-2 text-emerald-400 uppercase tracking-widest">Disponible</span>
-                                </a>
-                            @elseif($isCurrent)
-                                <div class="flex flex-col items-center p-4 bg-white/5 rounded-2xl border border-dashed border-white/20 opacity-80">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $stats['months'][$m] }}</span>
-                                    <i class="fa-solid fa-spinner fa-spin mt-2 text-blue-400"></i>
-                                    <span class="text-[8px] font-black mt-2 text-blue-500 uppercase tracking-widest">En cours...</span>
-                                </div>
-                            @elseif($isFuture)
-                                <div class="flex flex-col items-center p-4 bg-slate-950/30 rounded-2xl border border-white/5 opacity-30">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">{{ $stats['months'][$m] }}</span>
-                                    <i class="fa-solid fa-lock mt-2 text-slate-700"></i>
-                                    <span class="text-[8px] font-black mt-2 text-slate-700 uppercase tracking-widest">À venir</span>
-                                </div>
-                            @else
-                                <div class="flex flex-col items-center p-4 bg-rose-950/20 rounded-2xl border border-rose-900/20">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-rose-300/50">{{ $stats['months'][$m] }}</span>
-                                    <i class="fa-solid fa-clock-rotate-left mt-2 text-rose-900"></i>
-                                    <span class="text-[8px] font-black mt-2 text-rose-900 uppercase tracking-widest">Non clôturé</span>
-                                </div>
-                            @endif
-                        @endfor
-                    </div>
-                    <p class="mt-8 text-[9px] text-slate-500 font-bold uppercase tracking-wider italic">* Le système clôture automatiquement les comptes le 1er de chaque mois pour la période précédente.</p>
+                        @if($bilan)
+                            <a href="{{ route('reports.monthly', ['year' => $selectedYearNum, 'month' => $m]) }}" 
+                               class="flex flex-col items-center p-4 bg-white/10 rounded-2xl hover:bg-blue-600 transition-all border border-white/10 group/item shadow-lg">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">{{ $stats['months'][$m] }}</span>
+                                <i class="fa-solid fa-cloud-arrow-down mt-2 text-white text-lg group-hover/item:translate-y-1 transition-transform"></i>
+                                <span class="text-[8px] font-black mt-2 text-emerald-400 uppercase tracking-widest">Disponible</span>
+                            </a>
+                        @elseif($isCurrent)
+                            <div class="flex flex-col items-center p-4 bg-white/5 rounded-2xl border border-dashed border-white/20 opacity-80">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $stats['months'][$m] }}</span>
+                                <i class="fa-solid fa-spinner fa-spin mt-2 text-blue-400"></i>
+                                <span class="text-[8px] font-black mt-2 text-blue-500 uppercase tracking-widest">En cours...</span>
+                            </div>
+                        @elseif($isFuture)
+                            <div class="flex flex-col items-center p-4 bg-slate-950/30 rounded-2xl border border-white/5 opacity-30">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">{{ $stats['months'][$m] }}</span>
+                                <i class="fa-solid fa-lock mt-2 text-slate-700"></i>
+                                <span class="text-[8px] font-black mt-2 text-slate-700 uppercase tracking-widest">À venir</span>
+                            </div>
+                        @else
+                            <div class="flex flex-col items-center p-4 bg-rose-950/20 rounded-2xl border border-rose-900/20">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-300/50">{{ $stats['months'][$m] }}</span>
+                                <i class="fa-solid fa-clock-rotate-left mt-2 text-rose-900"></i>
+                                <span class="text-[8px] font-black mt-2 text-rose-900 uppercase tracking-widest">Non clôturé</span>
+                            </div>
+                        @endif
+                    @endfor
                 </div>
             </div>
-            @endif
+        </div>
+        @endif
 
-            {{-- Logs d'activité --}}
-            <div class="bg-white rounded-[50px] p-12 border border-slate-100 shadow-sm">
-                <h3 class="text-xl font-black text-slate-800 mb-8">Journal d'Activité</h3>
-                <div class="space-y-6">
-                    @foreach($stats['activity_logs'] as $log)
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 font-black text-xs uppercase">
+        {{-- Logs d'activité (ADMIN SEULEMENT) --}}
+        @if(auth()->user()->role === 'admin')
+            <div class="bg-white rounded-[50px] p-12 border border-slate-100 shadow-sm lg:col-span-2 mt-8">
+                <h3 class="text-xl font-black text-slate-800 mb-8">Journal d'Activité Système</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($stats['activity_logs']->take(6) as $log)
+                    <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-400 border border-slate-100 font-black text-xs uppercase shadow-sm">
                             {{ substr($log->user->name ?? '?', 0, 1) }}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold text-slate-700 truncate">
+                            <p class="text-[11px] font-bold text-slate-700 truncate">
                                 {{ $log->details['message'] ?? $log->action }}
                             </p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">{{ $log->created_at->diffForHumans() }}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">{{ $log->created_at->diffForHumans() }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
             </div>
+            @endif
+        </div>
         </div>
     @endif
 </div>

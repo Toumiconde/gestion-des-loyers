@@ -216,7 +216,10 @@ class DashboardController extends Controller
             'revenu_net'     => $revenuNet,
             'taux_occupation' => $tauxOccupation,
             'activity_logs'   => $activityLogs,
-            'locataires_liste' => (clone $queryLocataires)->with('contratActif.bien')->take(5)->get(),
+            'locataires_liste' => (clone $queryLocataires)->with('contratActif.bien')->latest()->take(5)->get(),
+            'recent_proprietaires' => ($user->role === 'admin' || $user->role === 'gestionnaire') 
+                                        ? \App\Models\Proprietaire::with('user')->latest()->take(5)->get()
+                                        : collect(),
             'bilans_officiels' => ($user->role === 'proprietaire') 
                                     ? \App\Models\Bilan::where('proprietaire_id', $user->proprietaire->id)
                                         ->where('annee', $selectedYear)
