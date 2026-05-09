@@ -99,11 +99,17 @@
                             <i class="fa-solid fa-user-gear"></i>
                         </div>
                         <div>
-                            <p class="font-black text-slate-800">{{ $incident->maintenancier->nom }}</p>
-                            <p class="text-xs text-slate-500">{{ $incident->maintenancier->specialite }}</p>
+                            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
+                                <p class="font-black text-slate-800">{{ $incident->maintenancier->nom }}</p>
+                                <p class="text-xs text-slate-500">{{ $incident->maintenancier->specialite }}</p>
+                            @else
+                                <p class="font-black text-slate-800">Prestataire Agréé</p>
+                                <p class="text-xs text-slate-500">Assigné par l'agence</p>
+                            @endif
                         </div>
                     </div>
-                    @if($incident->maintenancier->telephone)
+                    
+                    @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']) && $incident->maintenancier->telephone)
                     <a href="tel:{{ $incident->maintenancier->telephone }}" class="w-full flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-xl font-black text-xs hover:bg-blue-600 transition-all">
                         <i class="fa-solid fa-phone"></i> {{ $incident->maintenancier->telephone }}
                     </a>

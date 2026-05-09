@@ -195,10 +195,32 @@ class IncidentController extends Controller
             ]);
         }
 
+        // Si le statut passe à "en_devis", on synchronise les champs et on envoie auto au proprio
+        if ($validated['statut'] === 'en_devis' && $incident->devis_statut !== 'accepte') {
+            $incident->devis_montant = $validated['cout_estime'];
+            $incident->devis_statut  = 'envoye_proprio';
+            $incident->devis_envoye_at = now();
+            
+            // Notifier le propriétaire
+            $proprietaireUser = $incident->contrat->bien->proprietaire->user ?? null;
+            if ($proprietaireUser) {
+                $proprietaireUser->notifications()->create([
+                    'id'              => \Illuminate\Support\Str::uuid(),
+                    'type'            => 'App\Notifications\DevisIncident',
+                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_id'   => $proprietaireUser->id,
+                    'data'            => json_encode([
+                        'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
+                        'url'     => route('incidents.show', $incident),
+                    ]),
+                ]);
+            }
+        }
+
         $incident->update($validated);
 
         return redirect()->route('incidents.show', $incident)
-                         ->with('success', 'Incident mis à jour et comptabilisé.');
+                         ->with('success', 'Incident mis à jour avec succès.');
     }
 
     public function destroy(Incident $incident)
