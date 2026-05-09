@@ -38,7 +38,7 @@ class BroadcastController extends Controller
         // 1. Détermination des destinataires
         switch ($request->target) {
             case 'all_tenants':
-                if ($sender->isAdmin()) {
+                if ($sender->isAdmin() || $sender->role === 'gestionnaire') {
                     $recipients = User::where('role', 'locataire')->get();
                 } elseif ($sender->isProprietaire()) {
                     $recipients = User::whereHas('locataire.contrats.bien', function($q) use ($sender) {
@@ -48,7 +48,7 @@ class BroadcastController extends Controller
                 break;
 
             case 'all_owners':
-                if ($sender->isAdmin()) {
+                if ($sender->isAdmin() || $sender->role === 'gestionnaire') {
                     $recipients = User::where('role', 'proprietaire')->get();
                 }
                 break;
@@ -85,11 +85,11 @@ class BroadcastController extends Controller
 
             if (in_array('internal', $request->channel)) {
                 Message::create([
-                    'sender_id' => $sender->id,
+                    'sender_id'   => $sender->id,
                     'receiver_id' => $recipient->id,
-                    'subject' => $request->subject,
-                    'content' => $request->content,
-                    'is_urgent' => $isUrgent,
+                    'content'     => "<strong>Sujet : " . $request->subject . "</strong><br><br>" . $request->content,
+                    'is_urgent'   => $isUrgent,
+                    'type'        => 'standard',
                 ]);
             }
 

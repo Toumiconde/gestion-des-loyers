@@ -6,6 +6,7 @@ use App\Models\Locataire;
 use App\Models\Bien;
 use App\Models\Contrat;
 use App\Models\Paiement;
+use App\Models\Proprietaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 

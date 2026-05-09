@@ -67,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // DIFFUSION DE MASSE (BROADCAST)
-    Route::middleware('role:admin,proprietaire')->group(function() {
+    Route::middleware('role:admin,proprietaire,gestionnaire')->group(function() {
         Route::get('/broadcast', [BroadcastController::class, 'index'])->name('broadcast.index');
         Route::post('/broadcast/send', [BroadcastController::class, 'send'])->name('broadcast.send');
     });
@@ -110,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/reports/monthly', [DashboardController::class, 'exportMonthly'])
         ->name('reports.monthly')
-        ->middleware('role:admin,proprietaire');
+        ->middleware('role:admin,proprietaire,gestionnaire');
 
     // PROFILE
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -123,11 +123,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/recherche/{unite}/postuler', [\App\Http\Controllers\RechercheController::class, 'postuler'])->name('recherche.postuler');
 
     // EXPORTS EXCEL (CSV)
-    Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
-    Route::get('/export/locataires', [\App\Http\Controllers\ExportController::class, 'exportLocataires'])->name('export.locataires');
-    Route::get('/export/biens', [\App\Http\Controllers\ExportController::class, 'exportBiens'])->name('export.biens');
-    Route::get('/export/contrats', [\App\Http\Controllers\ExportController::class, 'exportContrats'])->name('export.contrats');
-    Route::get('/export/paiements', [\App\Http\Controllers\ExportController::class, 'exportPaiements'])->name('export.paiements');
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
+        Route::get('/export/locataires', [\App\Http\Controllers\ExportController::class, 'exportLocataires'])->name('export.locataires');
+        Route::get('/export/biens', [\App\Http\Controllers\ExportController::class, 'exportBiens'])->name('export.biens');
+        Route::get('/export/contrats', [\App\Http\Controllers\ExportController::class, 'exportContrats'])->name('export.contrats');
+        Route::get('/export/paiements', [\App\Http\Controllers\ExportController::class, 'exportPaiements'])->name('export.paiements');
+    });
 
     // GESTION DES DEMANDES DE LOCATION
     Route::get('/demandes-location', [\App\Http\Controllers\DemandeLocationController::class, 'index'])->name('demandes-location.index');
