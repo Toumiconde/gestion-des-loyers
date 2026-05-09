@@ -26,8 +26,7 @@ class IncidentController extends Controller
             $query->whereHas('contrat', fn($q) => $q->where('locataire_id', $locataireId));
             
         } elseif ($user->isAdmin() || $user->isGestionnaire() || $user->isComptable()) {
-            // Le staff voit TOUT et marque tous les incidents "nouveaux" comme vus
-            Incident::where('is_new', true)->update(['is_new' => false]);
+            // Le staff voit TOUT
             $maintenanceRequests = MaintenanceRequest::with('user')->latest()->get();
         }
 
@@ -127,14 +126,21 @@ class IncidentController extends Controller
 
     public function show(Incident $incident)
     {
-        if (auth()->user()->isProprietaire() && auth()->user()->proprietaire) {
-            if ($incident->contrat->bien->proprietaire_id !== auth()->user()->proprietaire->id) {
+        $user = auth()->user();
+
+        if ($user->isProprietaire() && $user->proprietaire) {
+            if ($incident->contrat->bien->proprietaire_id !== $user->proprietaire->id) {
                 abort(403, 'Cet incident ne vous concerne pas.');
             }
-        } elseif (auth()->user()->isLocataire() && auth()->user()->locataire) {
-            if ($incident->contrat->locataire_id !== auth()->user()->locataire->id) {
+        } elseif ($user->isLocataire() && $user->locataire) {
+            if ($incident->contrat->locataire_id !== $user->locataire->id) {
                 abort(403, 'Cet incident ne vous concerne pas.');
             }
+        }
+
+        // Marquer comme vu dès qu'un membre du staff ouvre la fiche
+        if ($incident->is_new && ($user->isAdmin() || $user->isGestionnaire() || $user->isComptable())) {
+            $incident->update(['is_new' => false]);
         }
 
         $incident->load('contrat.locataire', 'contrat.bien', 'declarePar');

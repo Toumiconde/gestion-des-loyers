@@ -81,10 +81,18 @@
                             </span>
                         </td>
                         <td class="px-8 py-5">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full {{ $i->statut === 'resolu' ? 'bg-emerald-500' : ($i->statut === 'en_cours' ? 'bg-blue-500' : 'bg-rose-500') }}"></div>
-                                <span class="text-xs font-black text-slate-700 capitalize">{{ str_replace('_', ' ', $i->statut) }}</span>
-                            </div>
+                            @if($i->is_new && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
+                                {{-- Point rouge : incident non encore consulté --}}
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse shadow-lg shadow-rose-300 flex-shrink-0"></span>
+                                    <span class="text-xs font-black text-rose-600 uppercase tracking-widest">Nouveau</span>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full {{ $i->statut === 'resolu' ? 'bg-emerald-500' : ($i->statut === 'paye' ? 'bg-blue-500' : ($i->statut === 'en_travaux' ? 'bg-amber-500' : ($i->statut === 'en_devis' ? 'bg-purple-500' : 'bg-rose-500'))) }}"></div>
+                                    <span class="text-xs font-black text-slate-700 capitalize">{{ str_replace('_', ' ', $i->statut) }}</span>
+                                </div>
+                            @endif
                         </td>
                         <td class="px-8 py-5 text-right">
                             <div class="flex justify-end gap-2">
