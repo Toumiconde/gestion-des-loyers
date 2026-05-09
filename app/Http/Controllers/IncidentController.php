@@ -283,6 +283,11 @@ class IncidentController extends Controller
             return back()->with('error', 'Veuillez d\'abord saisir un devis avant de l\'envoyer.');
         }
 
+        // On passe le statut général de l'incident à "en_devis" s'il était encore sur "ouvert"
+        if ($incident->statut === 'ouvert') {
+            $incident->statut = 'en_devis';
+        }
+
         $incident->devis_statut     = 'envoye_proprio';
         $incident->devis_envoye_at  = now();
         $incident->save();
