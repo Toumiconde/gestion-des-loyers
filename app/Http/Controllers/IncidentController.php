@@ -65,7 +65,7 @@ class IncidentController extends Controller
         ]);
 
         $user = auth()->user();
-        $contratId = $validated['contrat_id'];
+        $contratId = $validated['contrat_id'] ?? null;
 
         // Si c'est un locataire, on force son contrat actif s'il n'est pas fourni
         if ($user->isLocataire()) {
