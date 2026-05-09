@@ -207,30 +207,39 @@
         {{-- Description & Historique --}}
         <div class="lg:col-span-2 space-y-8">
             
-            {{-- Validation Devis (Propriétaire) --}}
-            @if(auth()->user()->isProprietaire() && $incident->devis_statut === 'envoye_proprio')
-            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-[30px] shadow-lg p-10 text-white relative overflow-hidden">
+            {{-- Validation Devis --}}
+            @if(in_array($incident->devis_statut, ['envoye_proprio', 'accepte', 'refuse']))
+            <div class="bg-gradient-to-r {{ $incident->devis_statut === 'accepte' ? 'from-emerald-500 to-teal-500' : ($incident->devis_statut === 'refuse' ? 'from-rose-500 to-red-500' : 'from-purple-600 to-blue-600') }} rounded-[30px] shadow-lg p-10 text-white relative overflow-hidden">
                 <div class="relative z-10">
                     <div class="flex items-center gap-4 mb-6">
                         <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl backdrop-blur-sm">
                             <i class="fa-solid fa-file-invoice-dollar text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-black">Validation requise</h3>
-                            <p class="text-purple-100 text-sm">Le gestionnaire a soumis un devis pour ces travaux.</p>
+                            <h3 class="text-xl font-black">
+                                @if($incident->devis_statut === 'accepte') Devis Accepté
+                                @elseif($incident->devis_statut === 'refuse') Devis Refusé
+                                @else Validation requise @endif
+                            </h3>
+                            <p class="text-white/80 text-sm">
+                                @if($incident->devis_statut === 'accepte') Les travaux peuvent commencer.
+                                @elseif($incident->devis_statut === 'refuse') Le devis a été refusé.
+                                @else Le gestionnaire a soumis un devis pour ces travaux. @endif
+                            </p>
                         </div>
                     </div>
                     
                     <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md mb-8 border border-white/20">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-purple-100 uppercase tracking-widest text-[10px] font-black">Montant du Devis</span>
+                            <span class="text-white/80 uppercase tracking-widest text-[10px] font-black">Montant du Devis</span>
                             <span class="text-2xl font-black">{{ number_format($incident->devis_montant, 0, ',', ' ') }} GNF</span>
                         </div>
                         @if($incident->devis_note)
-                            <p class="text-sm text-purple-50 italic">" {{ $incident->devis_note }} "</p>
+                            <p class="text-sm text-white/90 italic">" {{ $incident->devis_note }} "</p>
                         @endif
                     </div>
 
+                    @if($incident->devis_statut === 'envoye_proprio' && auth()->user()->isProprietaire())
                     <div class="flex flex-col sm:flex-row gap-4">
                         <form action="{{ route('incidents.accepterDevis', $incident) }}" method="POST" class="flex-1">
                             @csrf
@@ -254,6 +263,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
             @endif
