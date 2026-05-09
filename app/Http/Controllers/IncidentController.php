@@ -137,7 +137,7 @@ class IncidentController extends Controller
 
     public function update(Request $request, Incident $incident)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire() && auth()->user()->role !== 'comptable') {
             abort(403, 'Accès non autorisé.');
         }
 

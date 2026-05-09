@@ -59,16 +59,11 @@ class MessageController extends Controller
         $receivers = collect();
 
         if ($user->role === 'locataire') {
-            // Un locataire peut écrire à son proprio ET à la gestion (Gestionnaire/Comptable seulement, pas Admin)
-            $ownerIds = collect();
-            if ($user->locataire) {
-                $ownerIds = $user->locataire->contrats->pluck('bien.proprietaire.user_id')->filter()->unique();
-            }
-            
-            $receivers = User::where(function($q) use ($ownerIds) {
-                $q->whereIn('role', ['gestionnaire', 'comptable'])
-                  ->orWhereIn('id', $ownerIds);
-            })->where('id', '!=', $user->id)->get();
+            // Un locataire peut écrire UNIQUEMENT à la gestion (Gestionnaire/Comptable)
+            // Plus de pont direct avec le propriétaire pour rester pro
+            $receivers = User::whereIn('role', ['gestionnaire', 'comptable'])
+                             ->where('id', '!=', $user->id)
+                             ->get();
             
         } else if ($user->role === 'proprietaire') {
             // Un proprio peut écrire à ses locataires ET à la gestion (Gestionnaire/Comptable seulement, pas Admin)

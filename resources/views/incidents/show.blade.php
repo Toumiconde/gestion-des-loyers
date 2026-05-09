@@ -152,6 +152,20 @@
                     " {{ $incident->description }} "
                 </div>
 
+                @if($incident->photo_incident)
+                <div class="mb-10">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic">Photo de l'incident / Reçu</h3>
+                    <div class="relative group rounded-[30px] overflow-hidden border border-slate-200">
+                        <img src="{{ asset('storage/' . $incident->photo_incident) }}" class="w-full h-auto object-cover max-h-[500px]" alt="Photo Incident">
+                        <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <a href="{{ asset('storage/' . $incident->photo_incident) }}" target="_blank" class="px-6 py-3 bg-white text-slate-900 font-black rounded-2xl hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-download"></i> Voir / Télécharger
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 @if($incident->statut === 'paye')
                 <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-6">
                     <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl shadow-lg shadow-blue-100">
