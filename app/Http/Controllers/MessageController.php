@@ -83,7 +83,7 @@ class MessageController extends Controller
             'content'     => 'required|string|min:2',
             'attachment'  => 'nullable|file|max:10240',
             'is_broadcast' => 'nullable|boolean',
-            'broadcast_to' => 'nullable|string|in:all_owners,all_tenants,all_managers,tenants_in_debt',
+            'broadcast_to' => 'required_if:is_broadcast,1|string|in:all_owners,all_tenants,all_managers,tenants_in_debt',
         ];
 
         if (!$request->boolean('is_broadcast')) {
@@ -184,7 +184,16 @@ class MessageController extends Controller
             $recipient->notify(new \App\Notifications\ProfileUpdated($sender, $notifMsg));
         }
 
-        return redirect()->route('messages.index')->with('success', 'Message(s) envoyé(s).');
+        $count = $recipients->count();
+        if ($count === 0) {
+            return back()->withErrors(['is_broadcast' => 'Aucun destinataire trouvé pour ce groupe.'])->withInput();
+        }
+
+        $successMsg = $count > 1 
+            ? "Message de diffusion envoyé avec succès à {$count} destinataires."
+            : "Message envoyé avec succès.";
+
+        return redirect()->route('messages.index')->with('success', $successMsg);
     }
 
     public function show(Message $message)

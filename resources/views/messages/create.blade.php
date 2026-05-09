@@ -41,6 +41,22 @@
             </div>
         </div>
 
+        @if($errors->any())
+        <div class="p-6 bg-rose-50 border-b border-rose-100">
+            <div class="flex items-center gap-3 text-rose-600 font-black text-xs uppercase tracking-widest mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i> Attention : Erreur de saisie
+            </div>
+            <ul class="space-y-1">
+                @foreach($errors->all() as $error)
+                    <li class="text-rose-500 text-sm font-medium flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                        {{ $error }}
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <form method="POST" action="{{ route('messages.store') }}" enctype="multipart/form-data" class="p-8" x-data="{ isBroadcast: false }">
             @csrf
 
@@ -88,7 +104,9 @@
                                class="w-6 h-6 rounded-lg border-slate-300 text-rose-600 focus:ring-rose-500">
                         <span class="font-black text-slate-800 uppercase text-xs tracking-widest">Relancer mes Locataires en Dette</span>
                     </label>
-                    <input type="hidden" name="broadcast_to" value="tenants_in_debt" x-if="isBroadcast">
+                    <template x-if="isBroadcast">
+                        <input type="hidden" name="broadcast_to" value="tenants_in_debt">
+                    </template>
                 </div>
                 @endif
 
