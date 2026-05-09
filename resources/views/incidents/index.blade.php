@@ -81,11 +81,15 @@
                             </span>
                         </td>
                         <td class="px-8 py-5">
-                            @if($i->is_new && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
-                                {{-- Point rouge : incident non encore consulté --}}
+                            @if($i->is_new)
+                                {{-- Rouge pour TOUS tant que le gestionnaire n'a pas ouvert --}}
                                 <div class="flex items-center gap-2">
                                     <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse shadow-lg shadow-rose-300 flex-shrink-0"></span>
-                                    <span class="text-xs font-black text-rose-600 uppercase tracking-widest">Nouveau</span>
+                                    @if(auth()->user()->isLocataire())
+                                        <span class="text-xs font-black text-rose-600 uppercase tracking-widest">En attente</span>
+                                    @else
+                                        <span class="text-xs font-black text-rose-600 uppercase tracking-widest">Nouveau</span>
+                                    @endif
                                 </div>
                             @else
                                 @php
