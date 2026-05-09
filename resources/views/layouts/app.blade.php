@@ -92,8 +92,8 @@
             </a>
             @endif
 
-            {{-- Diffusion de Masse --}}
-            @if(auth()->user()->role !== 'locataire')
+            {{-- Diffusion de Masse (Admin/Gestionnaire seulement) --}}
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('broadcast.index') }}"
                class="flex items-center gap-4 px-5 py-4 mt-2 rounded-2xl transition-all duration-300 {{ request()->routeIs('broadcast.*') ? 'bg-indigo-600 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-tower-broadcast text-lg {{ request()->routeIs('broadcast.*') ? 'text-white' : 'text-slate-300' }}"></i>
@@ -151,11 +151,13 @@
                 </p>
             </div>
 
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('archives.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('archives.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-box-archive text-base {{ request()->routeIs('archives.*') ? 'text-white' : 'text-slate-400' }}"></i>
                 <span class="text-sm {{ request()->routeIs('archives.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Centre d'Archives</span>
             </a>
+            @endif
 
             @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('proprietaires.index') }}"
@@ -179,13 +181,16 @@
             </a>
             @endif
 
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('contrats.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('contrats.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-file-signature text-base {{ request()->routeIs('contrats.*') ? 'text-white' : 'text-slate-400' }}"></i>
                 <span class="text-sm {{ request()->routeIs('contrats.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Contrats</span>
             </a>
+            @endif
 
-            {{-- Demandes de location --}}
+            {{-- Demandes de location (Admin/Gestionnaire ou Locataire pour ses propres demandes) --}}
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'locataire']))
             <a href="{{ route('demandes-location.index') }}"
                class="flex items-center justify-between px-5 py-3 mt-2 rounded-2xl transition-all duration-300 {{ request()->routeIs('demandes-location.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <div class="flex items-center gap-4">
@@ -195,6 +200,7 @@
                     </span>
                 </div>
             </a>
+            @endif
 
             {{-- ===== FINANCE ===== --}}
             <div class="mt-6 mb-2 px-2">
@@ -203,6 +209,7 @@
                 </p>
             </div>
 
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('paiements.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('paiements.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-money-bill-wave text-base {{ request()->routeIs('paiements.*') ? 'text-white' : 'text-slate-400' }}"></i>
@@ -214,8 +221,9 @@
                 <i class="fa-solid fa-receipt text-base {{ request()->routeIs('quittances.*') ? 'text-white' : 'text-slate-400' }}"></i>
                 <span class="text-sm {{ request()->routeIs('quittances.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Quittances</span>
             </a>
+            @endif
 
-            @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'proprietaire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('relances.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('relances.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-bell text-base {{ request()->routeIs('relances.*') ? 'text-white' : 'text-slate-400' }}"></i>

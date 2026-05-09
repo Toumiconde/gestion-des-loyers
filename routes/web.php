@@ -40,23 +40,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
     Route::post('/onboarding/select', [OnboardingController::class, 'selectRole'])->name('onboarding.select');
 
-    // GESTION
-    Route::resource('proprietaires', ProprietaireController::class)->middleware('role:admin,gestionnaire');
-    Route::resource('biens', BienController::class)->middleware('role:admin,gestionnaire,proprietaire,locataire');
-    Route::resource('locataires', LocataireController::class)->middleware('role:admin,gestionnaire,proprietaire,locataire');
-    Route::resource('contrats', ContratController::class);
-    Route::resource('unites-locatives', \App\Http\Controllers\UniteLocativeController::class);
+    // GESTION (Lecture seule pour Propriétaires, Full pour Admin/Gestionnaire)
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::resource('proprietaires', ProprietaireController::class);
+        Route::resource('biens', BienController::class)->except(['index', 'show']);
+        Route::resource('locataires', LocataireController::class)->except(['index', 'show']);
+        Route::resource('contrats', ContratController::class);
+        Route::resource('unites-locatives', \App\Http\Controllers\UniteLocativeController::class);
+    });
 
-    // FINANCE
-    Route::resource('paiements', PaiementController::class);
-    Route::post('/paiements/{paiement}/relancer', [PaiementController::class, 'relancer'])->name('paiements.relancer');
-    Route::get('/quittances/generate/{paiement}', [QuittanceController::class, 'generate'])->name('quittances.generate');
-    Route::resource('quittances', QuittanceController::class);
-    Route::resource('relances', RelanceController::class)->middleware('role:admin,gestionnaire,proprietaire');
+    Route::middleware('role:proprietaire,locataire,admin,gestionnaire')->group(function() {
+        Route::get('/biens', [BienController::class, 'index'])->name('biens.index');
+        Route::get('/biens/{bien}', [BienController::class, 'show'])->name('biens.show');
+        Route::get('/locataires', [LocataireController::class, 'index'])->name('locataires.index');
+        Route::get('/locataires/{locataire}', [LocataireController::class, 'show'])->name('locataires.show');
+    });
 
-    // SUIVI
-    Route::resource('incidents', IncidentController::class);
-    Route::resource('documents', DocumentController::class);
+    // FINANCE (Admin/Gestionnaire seulement)
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::resource('paiements', PaiementController::class);
+        Route::post('/paiements/{paiement}/relancer', [PaiementController::class, 'relancer'])->name('paiements.relancer');
+        Route::get('/quittances/generate/{paiement}', [QuittanceController::class, 'generate'])->name('quittances.generate');
+        Route::resource('quittances', QuittanceController::class);
+        Route::resource('relances', RelanceController::class);
+    });
+
+    // SUIVI (Incidents et Documents)
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::resource('incidents', IncidentController::class)->except(['index', 'show']);
+        Route::resource('documents', DocumentController::class)->except(['index', 'show']);
+    });
+    
+    Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
+    Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
 
     // ADMINISTRATION
     Route::middleware('role:admin')->group(function() {
@@ -67,7 +85,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // DIFFUSION DE MASSE (BROADCAST)
-    Route::middleware('role:admin,proprietaire,gestionnaire')->group(function() {
+    Route::middleware('role:admin,gestionnaire')->group(function() {
         Route::get('/broadcast', [BroadcastController::class, 'index'])->name('broadcast.index');
         Route::post('/broadcast/send', [BroadcastController::class, 'send'])->name('broadcast.send');
     });
@@ -131,11 +149,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export/paiements', [\App\Http\Controllers\ExportController::class, 'exportPaiements'])->name('export.paiements');
     });
 
-    // GESTION DES DEMANDES DE LOCATION
-    Route::get('/demandes-location', [\App\Http\Controllers\DemandeLocationController::class, 'index'])->name('demandes-location.index');
-    Route::post('/demandes-location/{demande}/valider-proprietaire', [\App\Http\Controllers\DemandeLocationController::class, 'validerProprietaire'])->name('demandes-location.valider-proprietaire');
-    Route::post('/demandes-location/{demande}/valider-admin', [\App\Http\Controllers\DemandeLocationController::class, 'validerAdmin'])->name('demandes-location.valider-admin');
-    Route::post('/demandes-location/{demande}/rejeter', [\App\Http\Controllers\DemandeLocationController::class, 'rejeter'])->name('demandes-location.rejeter');
+    // GESTION DES DEMANDES DE LOCATION (Admin/Gestionnaire)
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::get('/demandes-location', [\App\Http\Controllers\DemandeLocationController::class, 'index'])->name('demandes-location.index');
+        Route::post('/demandes-location/{demande}/valider-admin', [\App\Http\Controllers\DemandeLocationController::class, 'validerAdmin'])->name('demandes-location.valider-admin');
+        Route::post('/demandes-location/{demande}/rejeter', [\App\Http\Controllers\DemandeLocationController::class, 'rejeter'])->name('demandes-location.rejeter');
+    });
+    
+    // Le propriétaire peut juste donner un avis (optionnel dans un vrai système mais on garde une trace)
+    Route::post('/demandes-location/{demande}/valider-proprietaire', [\App\Http\Controllers\DemandeLocationController::class, 'validerProprietaire'])->name('demandes-location.valider-proprietaire')->middleware('role:proprietaire');
 });
 
 require __DIR__.'/auth.php';
