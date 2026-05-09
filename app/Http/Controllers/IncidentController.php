@@ -179,9 +179,12 @@ class IncidentController extends Controller
             'date_resolution'  => 'nullable|date',
         ]);
 
+        // On remplit le modèle avec les données validées
+        $incident->fill($validated);
+
         // Si le statut passe à "paye" et n'était pas déjà "paye"
-        if ($validated['statut'] === 'paye' && $incident->statut !== 'paye') {
-            if (empty($validated['cout_reel']) && !$incident->cout_reel) {
+        if ($incident->isDirty('statut') && $incident->statut === 'paye') {
+            if (empty($incident->cout_reel) && $incident->cout_reel != '0') {
                 return back()->with('error', 'Veuillez saisir un coût réel pour marquer comme payé.');
             }
 
@@ -189,7 +192,7 @@ class IncidentController extends Controller
             \App\Models\Depense::create([
                 'libelle'      => "Réparation : " . $incident->titre . " (" . $incident->contrat->bien->libelle . ")",
                 'categorie'    => 'maintenance',
-                'montant'      => $validated['cout_reel'] ?? $incident->cout_reel,
+                'montant'      => $incident->cout_reel,
                 'date_depense' => now(),
                 'notes'        => "Généré automatiquement depuis l'incident #" . $incident->id,
                 'created_by'   => auth()->id(),
@@ -197,13 +200,10 @@ class IncidentController extends Controller
         }
 
         // Si le statut passe à "en_devis", on synchronise les champs et on envoie auto au proprio
-        if ($validated['statut'] === 'en_devis' && $incident->devis_statut !== 'accepte') {
-            if (empty($validated['devis_montant']) && !$incident->devis_montant) {
+        if ($incident->statut === 'en_devis' && $incident->devis_statut !== 'accepte') {
+            if (empty($incident->devis_montant) && $incident->devis_montant != '0') {
                 return back()->with('error', 'Veuillez saisir le Montant du Devis pour passer à ce statut.');
             }
-            
-            $incident->devis_montant = $validated['devis_montant'] ?? $incident->devis_montant;
-            $incident->devis_note    = $validated['devis_note'] ?? $incident->devis_note;
             
             // On envoie seulement si ça n'a pas déjà été envoyé
             if ($incident->devis_statut !== 'envoye_proprio') {
@@ -227,7 +227,7 @@ class IncidentController extends Controller
             }
         }
 
-        $incident->update($validated);
+        $incident->save();
 
         return redirect()->route('incidents.show', $incident)
                          ->with('success', 'Incident mis à jour avec succès.');
@@ -279,7 +279,7 @@ class IncidentController extends Controller
             abort(403);
         }
 
-        if (!$incident->devis_montant) {
+        if (empty($incident->devis_montant) && $incident->devis_montant != '0') {
             return back()->with('error', 'Veuillez d\'abord saisir un devis avant de l\'envoyer.');
         }
 
