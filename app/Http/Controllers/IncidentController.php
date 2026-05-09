@@ -142,8 +142,14 @@ class IncidentController extends Controller
             $incident->save();
         }
 
-        $incident->load('contrat.locataire', 'contrat.bien', 'declarePar');
-        return view('incidents.show', compact('incident'));
+        $incident->load('contrat.locataire', 'contrat.bien', 'declarePar', 'maintenancier');
+        
+        $maintenanciers = collect();
+        if ($user->isAdmin() || $user->isGestionnaire()) {
+            $maintenanciers = \App\Models\Maintenancier::where('disponibilite', 'disponible')->get();
+        }
+
+        return view('incidents.show', compact('incident', 'maintenanciers'));
     }
 
     public function edit(Incident $incident)
@@ -201,5 +207,145 @@ class IncidentController extends Controller
         $incident->delete();
         return redirect()->route('incidents.index')
                          ->with('success', 'Incident supprimé.');
+    }
+
+    // ================================================================
+    // WORKFLOW : ÉTAPE 2 - Gestionnaire assigne un maintenancier + devis
+    // ================================================================
+    public function assignerMaintenancier(Request $request, Incident $incident)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'maintenancier_id' => 'required|exists:maintenanciers,id',
+            'devis_montant'    => 'required|numeric|min:0',
+            'devis_note'       => 'nullable|string|max:1000',
+        ]);
+
+        $incident->maintenancier_id = $request->maintenancier_id;
+        $incident->devis_montant    = $request->devis_montant;
+        $incident->devis_note       = $request->devis_note;
+        $incident->devis_statut     = 'en_attente';
+        $incident->statut           = 'en_devis';
+        $incident->save();
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Maintenancier assigné et devis saisi. Vous pouvez maintenant envoyer le devis au propriétaire.');
+    }
+
+    // ================================================================
+    // WORKFLOW : ÉTAPE 3 - Gestionnaire envoie le devis au propriétaire
+    // ================================================================
+    public function envoyerDevisProprietaire(Incident $incident)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403);
+        }
+
+        if (!$incident->devis_montant) {
+            return back()->with('error', 'Veuillez d\'abord saisir un devis avant de l\'envoyer.');
+        }
+
+        $incident->devis_statut     = 'envoye_proprio';
+        $incident->devis_envoye_at  = now();
+        $incident->save();
+
+        // Notifier le propriétaire concerné
+        $proprietaireUser = $incident->contrat->bien->proprietaire->user ?? null;
+        if ($proprietaireUser) {
+            $proprietaireUser->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\DevisIncident',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $proprietaireUser->id,
+                'data'            => json_encode([
+                    'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
+                    'url'     => route('incidents.show', $incident),
+                ]),
+            ]);
+        }
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Devis envoyé au propriétaire. En attente de sa validation.');
+    }
+
+    // ================================================================
+    // WORKFLOW : ÉTAPE 4a - Propriétaire ACCEPTE le devis
+    // ================================================================
+    public function accepterDevis(Incident $incident)
+    {
+        if (!auth()->user()->isProprietaire()) {
+            abort(403);
+        }
+
+        if ($incident->contrat->bien->proprietaire_id !== auth()->user()->proprietaire->id) {
+            abort(403, 'Cet incident ne vous appartient pas.');
+        }
+
+        $incident->devis_statut    = 'accepte';
+        $incident->devis_valide_at = now();
+        $incident->statut          = 'en_travaux';
+        $incident->save();
+
+        // Notifier tous les gestionnaires
+        $gestionnaires = \App\Models\User::where('role', 'gestionnaire')->get();
+        foreach ($gestionnaires as $g) {
+            $g->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\DevisAccepte',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $g->id,
+                'data'            => json_encode([
+                    'message' => '✅ Le propriétaire a <strong>accepté</strong> le devis de ' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF pour : <strong>' . $incident->titre . '</strong>. Les travaux peuvent commencer.',
+                    'url'     => route('incidents.show', $incident),
+                ]),
+            ]);
+        }
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Devis accepté. Les travaux sont maintenant autorisés.');
+    }
+
+    // ================================================================
+    // WORKFLOW : ÉTAPE 4b - Propriétaire REFUSE le devis
+    // ================================================================
+    public function refuserDevis(Request $request, Incident $incident)
+    {
+        if (!auth()->user()->isProprietaire()) {
+            abort(403);
+        }
+
+        if ($incident->contrat->bien->proprietaire_id !== auth()->user()->proprietaire->id) {
+            abort(403, 'Cet incident ne vous appartient pas.');
+        }
+
+        $request->validate([
+            'refus_note' => 'required|string|max:500',
+        ]);
+
+        $incident->devis_statut = 'refuse';
+        $incident->refus_note   = $request->refus_note;
+        $incident->statut       = 'ouvert'; // Retour au début pour renégociation
+        $incident->save();
+
+        // Notifier tous les gestionnaires du refus
+        $gestionnaires = \App\Models\User::where('role', 'gestionnaire')->get();
+        foreach ($gestionnaires as $g) {
+            $g->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\DevisRefuse',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $g->id,
+                'data'            => json_encode([
+                    'message' => '❌ Le propriétaire a <strong>refusé</strong> le devis pour : <strong>' . $incident->titre . '</strong>. Motif : ' . $request->refus_note,
+                    'url'     => route('incidents.show', $incident),
+                ]),
+            ]);
+        }
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Refus enregistré. Le gestionnaire va être notifié pour renégocier.');
     }
 }

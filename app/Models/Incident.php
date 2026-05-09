@@ -19,14 +19,24 @@ class Incident extends Model
         'cout_reel',
         'technicien_nom',
         'technicien_tel',
+        'maintenancier_id',
+        'devis_montant',
+        'devis_note',
+        'devis_statut',
+        'refus_note',
+        'devis_envoye_at',
+        'devis_valide_at',
         'statut',
         'is_new',
         'date_resolution',
     ];
 
     protected $casts = [
-        'date_resolution' => 'date',
-        'is_new'          => 'boolean',
+        'date_resolution'  => 'date',
+        'devis_envoye_at'  => 'datetime',
+        'devis_valide_at'  => 'datetime',
+        'devis_montant'    => 'decimal:2',
+        'is_new'           => 'boolean',
     ];
 
     // Un incident appartient à un contrat
@@ -39,5 +49,11 @@ class Incident extends Model
     public function declarePar()
     {
         return $this->belongsTo(User::class, 'declare_par');
+    }
+
+    // Le maintenancier assigné
+    public function maintenancier()
+    {
+        return $this->belongsTo(Maintenancier::class);
     }
 }

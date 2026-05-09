@@ -10,6 +10,7 @@ use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\QuittanceController;
 use App\Http\Controllers\RelanceController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\MaintenancierController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ParametreController;
 use App\Http\Controllers\ActivityLogController;
@@ -76,6 +77,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/incidents', [IncidentController::class, 'store'])->name('incidents.store');
     });
     
+    // Workflow incidents
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::post('/incidents/{incident}/assigner-maintenancier', [IncidentController::class, 'assignerMaintenancier'])->name('incidents.assignerMaintenancier');
+        Route::post('/incidents/{incident}/envoyer-devis', [IncidentController::class, 'envoyerDevisProprietaire'])->name('incidents.envoyerDevis');
+        
+        // Gestion des maintenanciers
+        Route::resource('maintenanciers', MaintenancierController::class);
+    });
+    
+    Route::middleware('role:proprietaire')->group(function() {
+        Route::post('/incidents/{incident}/accepter-devis', [IncidentController::class, 'accepterDevis'])->name('incidents.accepterDevis');
+        Route::post('/incidents/{incident}/refuser-devis', [IncidentController::class, 'refuserDevis'])->name('incidents.refuserDevis');
+    });
+
     Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
     Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');

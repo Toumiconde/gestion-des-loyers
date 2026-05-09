@@ -90,26 +90,86 @@
             </div>
 
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Intervenant</h3>
-                @if($incident->technicien_nom)
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Intervenant & Devis</h3>
+                
+                @if($incident->maintenancier_id)
                 <div class="space-y-6">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
                             <i class="fa-solid fa-user-gear"></i>
                         </div>
                         <div>
-                            <p class="font-black text-slate-800">{{ $incident->technicien_nom }}</p>
-                            <p class="text-xs text-slate-500">Technicien / Prestataire</p>
+                            <p class="font-black text-slate-800">{{ $incident->maintenancier->nom }}</p>
+                            <p class="text-xs text-slate-500">{{ $incident->maintenancier->specialite }}</p>
                         </div>
                     </div>
-                    @if($incident->technicien_tel)
-                    <a href="tel:{{ $incident->technicien_tel }}" class="w-full flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-xl font-black text-xs hover:bg-blue-600 transition-all">
-                        <i class="fa-solid fa-phone"></i> {{ $incident->technicien_tel }}
+                    @if($incident->maintenancier->telephone)
+                    <a href="tel:{{ $incident->maintenancier->telephone }}" class="w-full flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-xl font-black text-xs hover:bg-blue-600 transition-all">
+                        <i class="fa-solid fa-phone"></i> {{ $incident->maintenancier->telephone }}
                     </a>
+                    @endif
+
+                    <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Montant du devis</p>
+                        <p class="text-xl font-black text-slate-800">{{ number_format($incident->devis_montant, 0, ',', ' ') }} GNF</p>
+                        @if($incident->devis_note)
+                            <p class="text-xs text-slate-500 mt-2 italic">{{ $incident->devis_note }}</p>
+                        @endif
+                        
+                        <div class="mt-4">
+                            @if($incident->devis_statut === 'en_attente')
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase bg-slate-200 text-slate-600">Devis en attente d'envoi</span>
+                            @elseif($incident->devis_statut === 'envoye_proprio')
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase bg-purple-100 text-purple-700">Envoyé au propriétaire</span>
+                            @elseif($incident->devis_statut === 'accepte')
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase bg-emerald-100 text-emerald-700">Devis Accepté</span>
+                            @elseif($incident->devis_statut === 'refuse')
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase bg-rose-100 text-rose-700">Devis Refusé</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Actions Gestionnaire : Envoyer le devis --}}
+                    @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']) && $incident->devis_statut === 'en_attente')
+                    <form action="{{ route('incidents.envoyerDevis', $incident) }}" method="POST" class="mt-4">
+                        @csrf
+                        <button type="submit" class="w-full py-3 bg-purple-600 text-white font-black rounded-xl text-xs uppercase hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Envoyer au propriétaire
+                        </button>
+                    </form>
                     @endif
                 </div>
                 @else
-                <p class="text-xs text-slate-400 italic">Aucun technicien assigné pour le moment.</p>
+                
+                {{-- Formulaire Assignation Maintenancier (Admin/Gestionnaire) --}}
+                @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+                    <form action="{{ route('incidents.assignerMaintenancier', $incident) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Maintenancier</label>
+                            <select name="maintenancier_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                                <option value="">Sélectionner un prestataire...</option>
+                                @foreach($maintenanciers as $m)
+                                    <option value="{{ $m->id }}">{{ $m->nom }} ({{ $m->specialite }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Montant du devis (GNF)</label>
+                            <input type="number" name="devis_montant" required min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Notes du devis (Optionnel)</label>
+                            <textarea name="devis_note" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-blue-600 text-white font-black rounded-xl text-xs uppercase hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                            Enregistrer & Assigner
+                        </button>
+                    </form>
+                @else
+                    <p class="text-xs text-slate-400 italic">Aucun technicien assigné pour le moment.</p>
+                @endif
+                
                 @endif
             </div>
 
@@ -140,6 +200,58 @@
 
         {{-- Description & Historique --}}
         <div class="lg:col-span-2 space-y-8">
+            
+            {{-- Validation Devis (Propriétaire) --}}
+            @if(auth()->user()->isProprietaire() && $incident->devis_statut === 'envoye_proprio')
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-[30px] shadow-lg p-10 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl backdrop-blur-sm">
+                            <i class="fa-solid fa-file-invoice-dollar text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black">Validation requise</h3>
+                            <p class="text-purple-100 text-sm">Le gestionnaire a soumis un devis pour ces travaux.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md mb-8 border border-white/20">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-purple-100 uppercase tracking-widest text-[10px] font-black">Montant du Devis</span>
+                            <span class="text-2xl font-black">{{ number_format($incident->devis_montant, 0, ',', ' ') }} GNF</span>
+                        </div>
+                        @if($incident->devis_note)
+                            <p class="text-sm text-purple-50 italic">" {{ $incident->devis_note }} "</p>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <form action="{{ route('incidents.accepterDevis', $incident) }}" method="POST" class="flex-1">
+                            @csrf
+                            <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-black rounded-xl transition-all shadow-lg shadow-emerald-500/30 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-check"></i> Accepter & Démarrer les travaux
+                            </button>
+                        </form>
+                        
+                        <div x-data="{ openRefus: false }" class="flex-1">
+                            <button @click="openRefus = !openRefus" type="button" class="w-full py-4 bg-rose-500 hover:bg-rose-400 text-white font-black rounded-xl transition-all shadow-lg shadow-rose-500/30 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-xmark"></i> Refuser le devis
+                            </button>
+                            
+                            <div x-show="openRefus" style="display: none;" class="mt-4 bg-white rounded-2xl p-4 text-slate-800 shadow-xl relative z-50">
+                                <form action="{{ route('incidents.refuserDevis', $incident) }}" method="POST">
+                                    @csrf
+                                    <label class="block text-xs font-bold text-slate-500 mb-2">Motif du refus :</label>
+                                    <textarea name="refus_note" required rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-rose-500 mb-3" placeholder="Ex: Trop cher, demandez un autre prestataire..."></textarea>
+                                    <button type="submit" class="w-full py-3 bg-rose-600 text-white font-black rounded-xl text-xs uppercase hover:bg-rose-700 transition-all">Confirmer le refus</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-10">
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-2xl font-black text-slate-800">{{ $incident->titre }}</h3>
@@ -151,6 +263,21 @@
                 <div class="p-8 bg-slate-50 rounded-[30px] border border-slate-100 text-slate-600 leading-relaxed italic mb-10">
                     " {{ $incident->description }} "
                 </div>
+
+                @if($incident->devis_statut === 'refuse' && $incident->refus_note)
+                <div class="mb-10 p-6 bg-rose-50 rounded-2xl border border-rose-100 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-black text-rose-800 uppercase tracking-widest mb-1">Devis refusé par le propriétaire</p>
+                        <p class="text-rose-700 text-sm">" {{ $incident->refus_note }} "</p>
+                        @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+                            <p class="text-xs text-rose-600 mt-2 font-medium">Veuillez assigner un nouveau maintenancier ou ajuster le devis.</p>
+                        @endif
+                    </div>
+                </div>
+                @endif
 
                 @if($incident->photo_incident)
                 <div class="mb-10">
