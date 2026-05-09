@@ -353,8 +353,8 @@
                 }" class="relative">
                     <button @click="open = !open; if(open) markAsRead()" class="w-14 h-14 rounded-2xl bg-white shadow-sm relative flex items-center justify-center focus:outline-none hover:shadow-md transition-shadow">
                         <i class="fa-regular fa-bell text-lg text-slate-600"></i>
-                        <template x-if="notifCount > 0 && {{ request()->routeIs('dashboard') ? 'true' : 'false' }}">
-                            <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-black">
+                        <template x-if="notifCount > 0">
+                            <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-black animate-bounce shadow-lg shadow-rose-200">
                                 <span x-text="notifCount"></span>
                             </div>
                         </template>

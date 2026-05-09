@@ -79,73 +79,100 @@ class MessageController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'content'     => 'required|string|min:5',
-        ]);
+        $rules = [
+            'content'     => 'required|string|min:2',
+            'attachment'  => 'nullable|file|max:10240', // 10MB
+            'is_broadcast' => 'nullable|boolean',
+            'broadcast_to' => 'nullable|string|in:all_owners,all_tenants,all_managers',
+        ];
 
-        $content = $request->content;
+        if (!$request->boolean('is_broadcast')) {
+            $rules['receiver_id'] = 'required|exists:users,id';
+        }
+
+        $request->validate($rules);
+
+        $attachmentPath = null;
+        $attachmentName = null;
+        $attachmentType = null;
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $attachmentName = $file->getClientOriginalName();
+            
+            // Validation WhatsApp-style
+            $isPhoto = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+            $isDoc = in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv']);
+
+            if (!$isPhoto && !$isDoc) {
+                return back()->withErrors(['attachment' => 'Format de fichier non supporté (Photos ou Documents uniquement).']);
+            }
+
+            $attachmentType = $isPhoto ? 'photo' : 'document';
+            $folder = $isPhoto ? 'messages/photos' : 'messages/documents';
+            $attachmentPath = $file->store($folder, 'public');
+        }
+
+        $sender = Auth::user();
         $isUrgent = $request->boolean('is_urgent');
         $type = $isUrgent ? 'urgent' : 'standard';
 
-        // Analyse de mots clés
-        if (!$isUrgent) {
-            $urgentKeywords = ['quitter', 'départ', 'urgent', 'problème', 'panne', 'fuite', 'résiliation', 'argent', 'payement', 'dette', 'loyer'];
-            foreach ($urgentKeywords as $word) {
-                if (stripos($content, $word) !== false) {
-                    $isUrgent = true;
-                    $type = 'urgent';
-                    break;
-                }
-            }
-        }
-
-        $receiver = User::findOrFail($request->receiver_id);
-        
-        // SÉCURITÉ STRICTE : Les locataires et proprios ne peuvent pas écrire à l'admin (sauf pour le Support)
-        if (Auth::user()->role !== 'admin' && $receiver->role === 'admin' && !$request->boolean('is_support')) {
-            abort(403, 'Vous n\'êtes pas autorisé à contacter l\'administration directement.');
-        }
-
-        // Sécurité role-based
-        if (Auth::user()->role === 'locataire' && $receiver->role === 'locataire') {
-            abort(403, 'Communication entre locataires non autorisée.');
-        }
-
-        $message = Message::create([
-            'sender_id'   => Auth::id(),
-            'receiver_id' => $request->receiver_id,
-            'content'     => $content,
-            'is_urgent'   => $isUrgent,
-            'type'        => $type,
-            'is_support'  => $request->boolean('is_support'),
-            'can_reply'   => true, // On autorise toujours la réponse pour permettre le fil de discussion
-        ]);
-
-        // Envoyer une notification au destinataire
-        $receiver = User::find($request->receiver_id);
-        
-        if ($request->boolean('is_support') && $receiver->role === 'admin') {
-            // Notification isolée pour le support (Admin)
-            $receiver->notify(new \App\Notifications\NewSupportRequestNotification(Auth::user(), $content));
+        // Destinataires
+        $recipients = collect();
+        if ($request->boolean('is_broadcast') && $sender->role === 'admin') {
+            $roleMap = [
+                'all_owners'   => 'proprietaire',
+                'all_tenants'  => 'locataire',
+                'all_managers' => 'gestionnaire',
+            ];
+            $targetRole = $roleMap[$request->broadcast_to];
+            $recipients = User::where('role', $targetRole)->get();
         } else {
-            $senderName = (Auth::user()->role === 'admin' && $request->boolean('is_support')) ? 'Le Système' : Auth::user()->name;
-            $receiver->notify(new ProfileUpdated(Auth::user(), "Nouveau message " . ($isUrgent ? 'URGENT' : '') . " de " . $senderName));
+            $recipients->push(User::findOrFail($request->receiver_id));
         }
 
-        // Si le message n'implique pas déjà l'admin, on notifie l'admin aussi
-        if (Auth::user()->role !== 'admin' && $receiver->role !== 'admin') {
-            $admins = User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                $admin->notify(new ProfileUpdated(Auth::user(), "Copie Notification: " . Auth::user()->name . " a écrit à " . $receiver->name));
+        foreach ($recipients as $recipient) {
+            // SÉCURITÉ STRICTE
+            if ($sender->role !== 'admin' && $recipient->role === 'admin' && !$request->boolean('is_support')) {
+                continue; // Skip or handle error
             }
+
+            $message = Message::create([
+                'sender_id'       => $sender->id,
+                'receiver_id'     => $recipient->id,
+                'broadcast_to'    => $request->broadcast_to,
+                'content'         => $request->content,
+                'attachment_path' => $attachmentPath,
+                'attachment_name' => $attachmentName,
+                'is_urgent'       => $isUrgent,
+                'type'            => $type,
+                'is_support'      => $request->boolean('is_support'),
+            ]);
+
+            // Intégration Document
+            if ($attachmentPath) {
+                \App\Models\Document::create([
+                    'documentable_type' => get_class($recipient),
+                    'documentable_id'   => $recipient->id,
+                    'nom'               => $attachmentName,
+                    'type'              => $attachmentType,
+                    'chemin'            => $attachmentPath,
+                    'taille_ko'         => round(filesize(storage_path('app/public/' . $attachmentPath)) / 1024),
+                    'uploaded_by'       => $sender->id,
+                ]);
+            }
+
+            // Notification
+            $notifTitle = $sender->role === 'admin' ? "L'Administration" : $sender->name;
+            $notifMsg = $attachmentPath 
+                ? "Admin vous a envoyé un document/photo. Veuillez consulter vos documents."
+                : "Nouveau message de " . $notifTitle;
+            
+            $recipient->notify(new \App\Notifications\ProfileUpdated($sender, $notifMsg));
         }
 
-        if ($request->boolean('is_support')) {
-            return redirect()->route('messages.index')->with('success', 'Votre requête support a été envoyée au système.');
-        }
-
-        return redirect()->route('messages.index')->with('success', 'Votre message a été envoyé.');
+        return redirect()->route('messages.index')->with('success', 'Message(s) envoyé(s) avec succès.');
     }
 
     public function show(Message $message)

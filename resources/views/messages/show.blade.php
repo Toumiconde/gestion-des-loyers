@@ -62,9 +62,41 @@
         </div>
 
         <div class="p-10 bg-slate-50/50">
-            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-slate-700 leading-relaxed text-lg whitespace-pre-line">
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-slate-700 leading-relaxed text-lg whitespace-pre-line mb-6">
                 {{ $message->content }}
             </div>
+
+            @if($message->attachment_path)
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between gap-6 group hover:border-blue-500 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-3xl text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all overflow-hidden">
+                        @php
+                            $extension = pathinfo($message->attachment_path, PATHINFO_EXTENSION);
+                            $isPhoto = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                        @endphp
+                        @if($isPhoto)
+                            <img src="{{ asset('storage/' . $message->attachment_path) }}" class="w-full h-full object-cover">
+                        @else
+                            <i class="fa-solid fa-file-pdf"></i>
+                        @endif
+                    </div>
+                    <div>
+                        <p class="font-black text-slate-800 text-sm mb-1 line-clamp-1">{{ $message->attachment_name }}</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            {{ $isPhoto ? 'Média / Photo' : 'Document Officiel' }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-end gap-2">
+                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Action requise</p>
+                    <a href="{{ route('documents.index') }}" 
+                       class="px-6 py-3 bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-long"></i> Consulter dans mes Documents
+                    </a>
+                </div>
+            </div>
+            @endif
         </div>
 
         @if($message->receiver_id === auth()->id())
