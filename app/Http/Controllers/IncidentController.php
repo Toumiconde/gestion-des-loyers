@@ -26,7 +26,8 @@ class IncidentController extends Controller
             $query->whereHas('contrat', fn($q) => $q->where('locataire_id', $locataireId));
             
         } elseif ($user->isAdmin() || $user->isGestionnaire() || $user->isComptable()) {
-            // Le staff voit TOUT
+            // Le staff voit TOUT et marque tous les incidents "nouveaux" comme vus
+            Incident::where('is_new', true)->update(['is_new' => false]);
             $maintenanceRequests = MaintenanceRequest::with('user')->latest()->get();
         }
 
@@ -102,6 +103,23 @@ class IncidentController extends Controller
             'target_id'   => $incident->id,
             'description' => "a déclaré un nouvel incident : " . $incident->titre,
         ]);
+
+        // Notifier tous les Admins et Gestionnaires
+        $staff = \App\Models\User::whereIn('role', ['admin', 'gestionnaire'])->get();
+        foreach ($staff as $staffMember) {
+            $staffMember->notify(new \Illuminate\Notifications\DatabaseNotification);
+            // Notification manuelle dans la table notifications Laravel
+            $staffMember->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\NouvelIncident',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $staffMember->id,
+                'data'            => json_encode([
+                    'message' => '🚨 Nouvel incident signalé : <strong>' . $incident->titre . '</strong>',
+                    'url'     => route('incidents.index'),
+                ]),
+            ]);
+        }
 
         return redirect()->route('dashboard')
                          ->with('success', 'Votre signalement a été envoyé avec succès. Un gestionnaire va l\'étudier rapidement.');

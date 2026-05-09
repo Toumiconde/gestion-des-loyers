@@ -255,10 +255,25 @@
                 </p>
             </div>
 
+            @php
+                $newIncidentsCount = (auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
+                    ? \App\Models\Incident::where('is_new', true)->count()
+                    : 0;
+            @endphp
             <a href="{{ route('incidents.index') }}"
-               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('incidents.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
-                <i class="fa-solid fa-triangle-exclamation text-base {{ request()->routeIs('incidents.*') ? 'text-white' : 'text-slate-400' }}"></i>
-                <span class="text-sm {{ request()->routeIs('incidents.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Incidents</span>
+               class="flex items-center justify-between px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('incidents.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <i class="fa-solid fa-triangle-exclamation text-base {{ request()->routeIs('incidents.*') ? 'text-white' : 'text-slate-400' }}"></i>
+                        @if($newIncidentsCount > 0)
+                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-[#02132D] rounded-full animate-pulse"></span>
+                        @endif
+                    </div>
+                    <span class="text-sm {{ request()->routeIs('incidents.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Incidents</span>
+                </div>
+                @if($newIncidentsCount > 0)
+                    <span class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ $newIncidentsCount }}</span>
+                @endif
             </a>
 
             <a href="{{ route('documents.index') }}"

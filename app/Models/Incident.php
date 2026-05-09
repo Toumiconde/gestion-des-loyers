@@ -20,6 +20,7 @@ class Incident extends Model
         'technicien_nom',
         'technicien_tel',
         'statut',
+        'is_new',
         'date_resolution',
     ];
 
