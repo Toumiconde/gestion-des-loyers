@@ -110,7 +110,7 @@
                         <h3 class="text-xl font-black text-slate-800">Unités Locatives (Dalles/Étages)</h3>
                         <p class="text-xs text-slate-400 mt-1">Gérez les différents niveaux de ce bâtiment</p>
                     </div>
-                    @if(auth()->user()->role !== 'locataire')
+                    @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
                     <button type="button" onclick="document.getElementById('modalAddUnite').classList.remove('hidden')" class="px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20">
                         <i class="fa-solid fa-plus"></i> Ajouter une Unité
                     </button>
@@ -126,7 +126,7 @@
                                 <th class="px-8 py-4">Chambres</th>
                                 <th class="px-8 py-4">Loyer</th>
                                 <th class="px-8 py-4 text-center">Statut</th>
-                                @if(auth()->user()->role !== 'locataire')
+                                @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
                                 <th class="px-8 py-4 text-right">Actions</th>
                                 @endif
                             </tr>
@@ -144,7 +144,7 @@
                                         {{ $unite->statut }}
                                     </span>
                                 </td>
-                                @if(auth()->user()->role !== 'locataire')
+                                @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
                                 <td class="px-8 py-4 text-right flex justify-end gap-2">
                                     <form action="{{ route('unites-locatives.destroy', $unite) }}" method="POST" onsubmit="return confirm('Supprimer cette unité ?')">
                                         @csrf @method('DELETE')
