@@ -62,76 +62,45 @@ class MaintenanceController extends Controller
         $text = Str::lower($text);
         
         $knowledgeBase = [
-            // === GESTION DES LOCATAIRES & CONTRATS ===
-            'locataire' => 'Pour gérer ou créer un locataire : Allez dans le menu "Contrats". Un locataire est toujours lié à un contrat de bail. Cliquez sur "Nouveau Contrat", sélectionnez le bien vide, et remplissez les informations du nouveau locataire. C\'est cette action qui crée officiellement le locataire dans votre système.',
-            'guide' => 'Guide de création : 1. Allez dans "Contrats". 2. Cliquez sur "Nouveau". 3. Choisissez le Bien. 4. Saisissez les infos du locataire (Nom, Tél, Loyer). 5. Validez. Le système s\'occupe du reste !',
-            'creation' => 'La création d\'un nouvel élément se fait par les menus dédiés : "Biens Immobiliers" pour les maisons, et "Contrats" pour les nouveaux locataires.',
-            'contrat' => 'Chaque contrat définit la durée, le loyer et la caution. Vous pouvez consulter, modifier ou télécharger le bail en format PDF directement depuis la liste des contrats.',
-            'bail' => 'Le bail (contrat) est généré automatiquement. Assurez-vous que les informations du bien et du locataire sont correctes avant de l\'imprimer.',
-            'caution' => 'La caution (ou dépôt de garantie) est enregistrée lors de la création du contrat. Elle apparaît dans le résumé financier du locataire.',
-            'resiliation' => 'Pour mettre fin à un contrat : Allez dans "Contrats", sélectionnez le contrat actif et utilisez l\'option "Clôturer" ou "Résilier". Cela libérera le bien automatiquement.',
-            'depart' => 'Lors du départ d\'un locataire, assurez-vous de marquer le contrat comme terminé pour que le bien repasse en statut "Libre" dans vos statistiques.',
+            // === INVESTISSEMENT & PERFORMANCE ===
+            'rentabilite|rendement|profit' => 'La rentabilité nette est calculée après déduction de nos frais de gestion (10%) et des frais de maintenance. Pour l\'optimiser, nous conseillons de valider rapidement les réparations mineures pour éviter qu\'elles ne deviennent majeures et coûteuses.',
+            'investissement|patrimoine|valeur' => 'Pour valoriser votre patrimoine, l\'agence effectue une veille constante du marché. Un bien entretenu prend en moyenne 3 à 5% de valeur par an. Nous pouvons vous conseiller sur les rénovations à forte valeur ajoutée (peinture, sanitaires, cuisine).',
+            'fiscalite|impots|declaration|revenus fonciers' => 'Chaque année en mars, nous générons un "Récapitulatif Fiscal Annuel" disponible dans vos documents. Il contient le total des loyers perçus et des charges déductibles (travaux, taxes) pour faciliter votre déclaration d\'impôts.',
+            'net|revenu net|virement' => 'Vos virements sont effectués entre le 5 et le 10 de chaque mois, après encaissement effectif des loyers. Le montant net correspond au loyer brut moins les charges de l\'immeuble et nos honoraires de gestion.',
+            'vacance|vide|inoccupe' => 'En cas de logement vide, notre protocole est immédiat : 1. Révision du prix selon le marché actuel. 2. Shooting photo professionnel. 3. Diffusion prioritaire sur nos canaux (SMS/Web). Nous visons un relocation en moins de 15 jours.',
 
-            // === GESTION DES BIENS IMMOBILIERS ===
-            'bien' => 'Pour gérer vos biens : Allez dans le menu "Biens Immobiliers". Vous pouvez y voir la liste complète, ajouter une photo pour chaque maison/appartement, et vérifier le statut (Occupé ou Libre). Si vous voulez en ajouter un nouveau, utilisez le bouton indigo "Ajouter un bien" en haut à droite.',
-            'maison' => 'Pour vos maisons, vous pouvez préciser l\'adresse exacte et le nombre de pièces dans la fiche descriptive du bien.',
-            'appartement' => 'La gestion des appartements permet d\'indiquer l\'étage et le numéro de porte pour une meilleure organisation de votre parc.',
-            'ajouter' => 'L\'ajout d\'un bien est instantané. Cliquez sur le bouton "+" dans "Biens Immobiliers" et remplissez le formulaire.',
-            'modifier' => 'Pour modifier une information, cliquez sur l\'icône de "Crayon" à droite de la ligne concernée dans vos tableaux.',
-            'supprimer' => 'Attention : La suppression déplace l\'élément dans le "Centre d\'Archives". Vous pourrez le restaurer si vous changez d\'avis.',
+            // === JURIDIQUE & PROCÉDURES ===
+            'expulsion|impaye|litige|contentieux' => 'En cas d\'impayé : Jour 5 (Relance amiable), Jour 15 (Mise en demeure par voie d\'huissier), Jour 30 (Engagement de la procédure de résiliation de bail). L\'agence gère toute la relation avec les avocats et huissiers pour vous protéger.',
+            'caution|depot de garantie|remboursement' => 'Le dépôt de garantie est conservé par l\'agence (ou par vous selon le contrat). Il est restitué au locataire sous 1 à 2 mois après son départ, déduction faite des éventuelles dégradations constatées lors de l\'état des lieux.',
+            'bail|contrat|signature' => 'Tous nos baux sont conformes à la législation en vigueur. Ils incluent une clause de solidarité et une clause résolutoire pour sécuriser votre investissement au maximum.',
+            'etat des lieux|entree|sortie' => 'Nous réalisons des états des lieux numériques avec photos haute définition. Ce document est votre seule preuve juridique en cas de dégradations causées par le locataire.',
+            'preavis|depart|quitter' => 'Le locataire doit respecter un préavis (généralement 1 à 3 mois). Dès réception du préavis, nous commençons la recherche d\'un nouveau locataire pour éviter toute rupture de revenus.',
 
-            // === FINANCES, LOYERS & QUITTANCES ===
-            'loyer' => 'Le montant du loyer est celui fixé dans le contrat. Le système génère un appel de loyer chaque mois. Vous pouvez suivre les paiements dans le Dashboard.',
-            'paiement' => 'Les paiements peuvent être "Complets", "Partiels" ou "En retard". Chaque transaction est enregistrée avec sa date et son mode de règlement.',
-            'versement' => 'Tout versement effectué par un locataire doit être validé par vous ou l\'admin pour générer la quittance correspondante.',
-            'quittance' => 'La quittance est le reçu officiel. Elle est générée en PDF dès que le paiement est marqué comme "Payé". Elle porte votre signature numérique par défaut.',
-            'recu' => 'Le reçu de paiement est identique à la quittance. Vous pouvez l\'envoyer par email en un clic depuis la liste des quittances.',
-            'retard' => 'En cas de retard, le système affiche une alerte rouge. Utilisez l\'icône "Avion" pour envoyer une relance immédiate par SMS ou Email.',
-            'impaye' => 'Pour les impayés persistants, vous pouvez consulter l\'historique global du locataire pour préparer un dossier de recouvrement.',
+            // === TECHNIQUE & MAINTENANCE ===
+            'incident|panne|reparation|fuite|electricite' => 'Notre réseau de techniciens agréés intervient sous 24h pour les urgences (eau, électricité). Pour les travaux de plus de 500 000 GNF, nous demandons systématiquement votre validation via le système avant d\'engager les frais.',
+            'devis|prix travaux|facture maintenance' => 'Chaque devis est scanné et disponible dans votre menu "Documents". Vous pouvez les comparer ou nous demander de faire appel à votre propre technicien si vous préférez.',
+            'sinistre|assurance|degat des eaux' => 'En cas de sinistre majeur, l\'agence gère la déclaration auprès des assurances. Nous vous demandons simplement de nous fournir votre numéro de police d\'assurance propriétaire non-occupant (PNO).',
 
-            // === OUTILS, STATS & TECHNIQUE ===
-            'chiffre' => 'Vos statistiques (Dashboard) incluent : Revenus mensuels, Taux d\'occupation et Total des créances en attente.',
-            'graphique' => 'Les graphiques vous permettent de visualiser la rentabilité de vos biens sur l\'année en cours.',
-            'bilan' => 'Pour un bilan annuel, filtrez vos quittances par année pour obtenir le total de vos revenus fonciers.',
-            'pdf' => 'Tous nos documents (Baux, Quittances, Rapports) sont exportables en format PDF haute qualité.',
-            'telecharger' => 'Cherchez l\'icône de "Flèche vers le bas" ou de "Fichier" pour télécharger vos documents sur votre ordinateur ou téléphone.',
-            'imprimer' => 'Ouvrez le fichier PDF généré et utilisez la commande "Imprimer" de votre navigateur ou de votre lecteur PDF.',
-            'archive' => 'Le Centre d\'Archives stocke vos éléments supprimés. C\'est une sécurité pour ne jamais perdre de données importantes.',
-            'restaurer' => 'Pour restaurer, allez dans "Centre d\'Archives", trouvez l\'élément et cliquez sur le bouton de restauration bleu.',
-
-            // === COMPTE & SECURITE ===
-            'profil' => 'Dans votre profil, vous pouvez changer votre photo, votre numéro de téléphone et surtout votre Signature Digitale.',
-            'signature' => 'La signature se fait à la souris ou au doigt. Elle est cruciale pour que vos quittances soient juridiquement valables.',
-            'password' => 'Pour changer votre mot de passe, allez dans "Profil" > "Sécurité". Utilisez un mot de passe robuste (lettres, chiffres, symboles).',
-            'connexion' => 'Si vous avez des problèmes de connexion, vérifiez que votre email est correct ou utilisez la fonction "Mot de passe oublié".',
-
-            // === COMMUNICATION ===
-            'message' => 'La messagerie permet d\'envoyer des notifications à vos locataires. Les messages de l\'Admin sont par contre non-répondables (infos officielles).',
-            'sms' => 'Les SMS de relance sont envoyés automatiquement si vous utilisez la fonction de relance rapide sur les impayés.',
-            'email' => 'Chaque quittance est automatiquement envoyée par email au locataire si son adresse est renseignée dans sa fiche.',
-            
-            // === GESTION DES PROPRIÉTAIRES (INVESTISSEMENT & RENTABILITÉ) ===
-            'rentabilite' => 'Votre rentabilité brute est calculée par le rapport entre vos loyers annuels et la valeur de vos biens. Pour voir votre rentabilité nette (après charges et impôts), consultez votre dashboard dans la section "Performance Financière".',
-            'investissement' => 'Pour optimiser votre investissement : 1. Maintenez vos biens en bon état pour éviter les vacances locatives. 2. Suivez vos charges de maintenance via le menu "Incidents". 3. Utilisez nos rapports mensuels pour votre comptabilité.',
-            'fiscalite' => 'Vos revenus fonciers doivent être déclarés annuellement. Vous pouvez télécharger tous vos reçus et bilans certifiés par l\'agence dans la section "Relevés de Gestion" de votre Dashboard.',
-            'net' => 'Votre revenu net affiché sur le Dashboard correspond à : (Loyers encaissés) - (Charges de maintenance payées) - (Commissions d\'agence). C\'est l\'argent réel qui vous revient.',
-            'performance' => 'Le graphique d\'évolution sur votre Dashboard compare vos revenus actuels à ceux de l\'année précédente. Une courbe ascendante indique une bonne santé de votre patrimoine.',
-            'vacance' => 'La vacance locative est votre plus grande perte. Si un bien est libre, utilisez la fonction "Promotion" ou demandez au gestionnaire de lancer une campagne de diffusion via le Broadcast.',
+            // === VIE DE L'AGENCE & FRAIS ===
+            'commission|frais de gestion|honoraires' => 'Nos honoraires de gestion (10%) couvrent : la recherche de locataire, la rédaction des baux, l\'encaissement des loyers, la gestion des pannes et le suivi juridique. C\'est le prix de votre tranquillité d\'esprit.',
+            'copropriete|syndic|charges' => 'Si votre bien est en copropriété, nous pouvons payer vos charges de syndic directement depuis vos revenus locatifs sur simple demande de votre part.',
+            'horaires|contact|agence' => 'L\'agence est ouverte du Lundi au Vendredi (8h-18h) et le Samedi (9h-13h). Cependant, ce Dashboard et notre IA sont disponibles 24h/24 pour répondre à vos besoins urgents.',
 
             // === REDIRECTION ADMIN (ZONES RÉSERVÉES) ===
-            'serveur' => 'Requête Serveur : Cette question touche à l\'infrastructure technique profonde. Seul l\'administrateur peut intervenir physiquement sur le serveur.',
-            'config' => 'Configuration Système : Les réglages globaux (taxes, noms d\'agence, logo système) sont gérés par l\'Admin. Veuillez le contacter pour toute modification.',
-            'admin' => 'Droits Admin : Vous demandez l\'accès à une zone réservée à la direction de l\'agence. Merci de vous présenter à l\'agence pour obtenir ces droits.',
-            'securite' => 'Protocole de Sécurité : Pour modifier les paramètres de sécurité avancés, une vérification d\'identité physique à l\'agence est obligatoire.',
+            'serveur|technique|bug|erreur' => 'Pour tout problème technique lié au logiciel (bug d\'affichage, erreur 500), merci de contacter directement notre support technique via le bouton "Support" de la sidebar.',
+            'admin|config|reglage' => 'Certaines configurations (changement de logo, modification des taxes globales) sont réservées à la direction. Veuillez envoyer un message au "Directeur" via la messagerie pour ces demandes.',
         ];
 
-        foreach ($knowledgeBase as $keyword => $response) {
-            if (Str::contains($text, $keyword)) {
-                return "🤖 [Assistant IA Expert] : " . $response;
+        foreach ($knowledgeBase as $keywords => $response) {
+            $keywordArray = explode('|', $keywords);
+            foreach ($keywordArray as $keyword) {
+                if (Str::contains($text, $keyword)) {
+                    return "🤖 [Moteur de Recherche IA GestLoyer] : " . $response;
+                }
             }
         }
 
-        return null;
+        return "🤖 [Assistant IA] : Je ne suis pas certain de comprendre votre demande. Pouvez-vous préciser si cela concerne la 'rentabilité', les 'impayés', les 'travaux' ou votre 'virement' ? Je suis là pour vous conseiller sur tous les aspects de votre investissement.";
     }
 
     public function manualResponse(Request $request, MaintenanceRequest $maintenanceRequest)
