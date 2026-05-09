@@ -17,19 +17,17 @@
     <!-- HEADER -->
     <table style="width: 100%; border: none; margin-bottom: 20px;">
         <tr>
-            <td style="width: 150px; border: none; text-align: left; vertical-align: top;">
+            <td style="width: 100px; border: none; text-align: left; vertical-align: top;">
                 @if($logo)
-                    <img src="{{ $logo }}" style="width: 120px; height: auto;">
+                    <img src="{{ $logo }}" width="60" height="60" style="width: 60px; height: 60px;">
                 @endif
             </td>
             <td style="border: none; text-align: center; vertical-align: middle;">
-                <div style="font-size: 16pt; font-weight: bold; color: #1e293b;">{{ $company_name ?? 'GESTLOYER Immobilier' }}</div>
-                <div style="font-size: 14pt; font-weight: bold; color: #475569; margin-top: 5px;">{{ $title }}</div>
-                <div style="font-size: 9pt; color: #94a3b8;">Généré le {{ date('d/m/Y H:i') }}</div>
+                <div style="font-size: 14pt; font-weight: bold; color: #1e293b;">{{ $company_name ?? 'GESTLOYER Immobilier' }}</div>
+                <div style="font-size: 12pt; font-weight: bold; color: #475569;">{{ $title }}</div>
+                <div style="font-size: 8pt; color: #94a3b8;">{{ date('d/m/Y H:i') }}</div>
             </td>
-            <td style="width: 150px; border: none; text-align: right; vertical-align: top;">
-                <!-- Espace vide à droite du header si besoin -->
-            </td>
+            <td style="width: 100px; border: none;"></td>
         </tr>
     </table>
 
@@ -38,9 +36,7 @@
         <thead>
             <tr>
                 @foreach($headers as $h)
-                    <th style="background-color: #f8fafc; color: #334155; font-weight: bold; border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 10pt;">
-                        {{ $h }}
-                    </th>
+                    <th style="background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px; text-align: left; font-size: 9pt;">{{ $h }}</th>
                 @endforeach
             </tr>
         </thead>
@@ -48,9 +44,7 @@
             @foreach($data as $row)
                 <tr>
                     @foreach($row as $cell)
-                        <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 10pt; color: #475569;">
-                            {{ $cell }}
-                        </td>
+                        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: left; font-size: 9pt;">{{ $cell }}</td>
                     @endforeach
                 </tr>
             @endforeach
@@ -58,15 +52,14 @@
     </table>
 
     <!-- FOOTER -->
-    <table style="width: 100%; border: none; margin-top: 40px;">
+    <table style="width: 100%; border: none; margin-top: 20px;">
         <tr>
             <td style="border: none;"></td>
-            <td style="width: 300px; border: none; text-align: right; vertical-align: bottom;">
-                <p style="font-weight: bold; margin-bottom: 10px; font-size: 10pt;">Signature et Cachet Officiel :</p>
+            <td style="width: 200px; border: none; text-align: right; vertical-align: bottom;">
+                <p style="font-weight: bold; font-size: 9pt; margin-bottom: 5px;">Cachet de l'Agence :</p>
                 @if($stamp)
-                    <img src="{{ $stamp }}" style="width: 180px; height: auto;">
+                    <img src="{{ $stamp }}" width="100" height="100" style="width: 100px; height: 100px;">
                 @endif
-                <p style="font-size: 8pt; color: #94a3b8; margin-top: 5px;">Document généré par GESTLOYER - Système Certifié</p>
             </td>
         </tr>
     </table>
