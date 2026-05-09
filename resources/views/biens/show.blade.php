@@ -29,12 +29,14 @@
             </ol>
         </nav>
         
+        @if(auth()->user()->role !== 'proprietaire')
         <div class="flex gap-3">
             <a href="{{ route('biens.edit', $bien) }}" 
                class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-600 hover:text-white transition-all flex items-center gap-2">
                 <i class="fa-solid fa-pen-to-square"></i> Modifier
             </a>
         </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

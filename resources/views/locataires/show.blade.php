@@ -42,10 +42,12 @@
                 </button>
             </form>
             @endif
+            @if(auth()->user()->role !== 'proprietaire')
             <a href="{{ route('locataires.edit', $locataire) }}" 
                class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-600 hover:text-white transition-all flex items-center gap-2">
                 <i class="fa-solid fa-user-pen"></i> Modifier le profil
             </a>
+            @endif
         </div>
     </div>
 
