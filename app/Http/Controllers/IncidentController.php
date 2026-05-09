@@ -106,8 +106,6 @@ class IncidentController extends Controller
         // Notifier tous les Admins et Gestionnaires
         $staff = \App\Models\User::whereIn('role', ['admin', 'gestionnaire'])->get();
         foreach ($staff as $staffMember) {
-            $staffMember->notify(new \Illuminate\Notifications\DatabaseNotification);
-            // Notification manuelle dans la table notifications Laravel
             $staffMember->notifications()->create([
                 'id'              => \Illuminate\Support\Str::uuid(),
                 'type'            => 'App\Notifications\NouvelIncident',
