@@ -43,19 +43,42 @@
                         </div>
 
                         <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Choisir un Maintenancier (Optionnel)</label>
+                            <select name="maintenancier_id" id="maintenancier_select"
+                                    class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none appearance-none cursor-pointer">
+                                <option value="">Saisie manuelle ci-dessous...</option>
+                                @foreach($maintenanciers as $m)
+                                    <option value="{{ $m->id }}" data-nom="{{ $m->nom }}" data-tel="{{ $m->telephone }}" {{ old('maintenancier_id', $incident->maintenancier_id) == $m->id ? 'selected' : '' }}>
+                                        {{ $m->nom }} ({{ $m->specialite }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nom du Technicien / Entreprise</label>
-                            <input type="text" name="technicien_nom" value="{{ old('technicien_nom', $incident->technicien_nom) }}"
+                            <input type="text" name="technicien_nom" id="technicien_nom" value="{{ old('technicien_nom', $incident->technicien_nom) }}"
                                    placeholder="Ex: Plomberie Moderne"
                                    class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none">
                         </div>
 
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Téléphone Technicien</label>
-                            <input type="text" name="technicien_tel" value="{{ old('technicien_tel', $incident->technicien_tel) }}"
+                            <input type="text" name="technicien_tel" id="technicien_tel" value="{{ old('technicien_tel', $incident->technicien_tel) }}"
                                    placeholder="+224 ..."
                                    class="w-full bg-slate-50 border-none h-14 px-6 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none">
                         </div>
                     </div>
+
+                    <script>
+                        document.getElementById('maintenancier_select').addEventListener('change', function() {
+                            const selectedOption = this.options[this.selectedIndex];
+                            if (selectedOption.value) {
+                                document.getElementById('technicien_nom').value = selectedOption.getAttribute('data-nom');
+                                document.getElementById('technicien_tel').value = selectedOption.getAttribute('data-tel');
+                            }
+                        });
+                    </script>
 
                     {{-- Budget & Finances --}}
                     <div class="space-y-6">

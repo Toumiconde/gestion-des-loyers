@@ -157,7 +157,9 @@ class IncidentController extends Controller
         if (auth()->user()->isProprietaire() || auth()->user()->isLocataire()) {
             abort(403, 'Vous ne pouvez pas modifier un incident.');
         }
-        return view('incidents.edit', compact('incident'));
+        
+        $maintenanciers = \App\Models\Maintenancier::where('disponibilite', 'disponible')->get();
+        return view('incidents.edit', compact('incident', 'maintenanciers'));
     }
 
     public function update(Request $request, Incident $incident)
@@ -167,12 +169,13 @@ class IncidentController extends Controller
         }
 
         $validated = $request->validate([
-            'statut'          => 'required|in:ouvert,en_devis,en_travaux,resolu,paye',
-            'cout_estime'     => 'nullable|numeric|min:0',
-            'cout_reel'       => 'nullable|numeric|min:0',
-            'technicien_nom'  => 'nullable|string|max:255',
-            'technicien_tel'  => 'nullable|string|max:20',
-            'date_resolution' => 'nullable|date',
+            'statut'           => 'required|in:ouvert,en_devis,en_travaux,resolu,paye',
+            'cout_estime'      => 'nullable|numeric|min:0',
+            'cout_reel'        => 'nullable|numeric|min:0',
+            'maintenancier_id' => 'nullable|exists:maintenanciers,id',
+            'technicien_nom'   => 'nullable|string|max:255',
+            'technicien_tel'   => 'nullable|string|max:20',
+            'date_resolution'  => 'nullable|date',
         ]);
 
         // Si le statut passe à "paye" et n'était pas déjà "paye"
