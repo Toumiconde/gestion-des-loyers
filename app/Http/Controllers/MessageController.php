@@ -8,6 +8,7 @@ use App\Notifications\ProfileUpdated;
 use App\Notifications\NewSupportRequestNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
 {

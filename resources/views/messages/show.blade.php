@@ -125,8 +125,13 @@
                 </div>
                 <h4 class="text-slate-800 font-black uppercase tracking-widest text-sm mb-2">Message à Sens Unique</h4>
                 <p class="text-slate-500 font-medium max-w-sm">
-                    Cette communication provient de l'administration ou de la gestion. 
-                    <span class="block mt-2 font-black text-rose-600 uppercase text-[10px]">Réponse impossible pour ce type de message.</span>
+                    @if(($message->sender->role ?? '') === 'admin')
+                        Cette communication provient de l'administration. 
+                        <span class="block mt-2 font-black text-rose-600 uppercase text-[10px]">Impossible de répondre à l'administration.</span>
+                    @else
+                        Cette communication provient de la gestion. 
+                        <span class="block mt-2 font-black text-rose-600 uppercase text-[10px]">Impossible de répondre à la gestion.</span>
+                    @endif
                 </p>
             </div>
             @endif
