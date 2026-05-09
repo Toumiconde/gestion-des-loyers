@@ -59,19 +59,25 @@ class MessageController extends Controller
         $receivers = collect();
 
         if ($user->role === 'locataire') {
-            // Un locataire peut écrire à son (ou ses) proprio(s) UNIQUEMENT (plus d'admin)
+            // Un locataire peut écrire à son proprio ET à la gestion (Admin/Gestionnaire)
+            $adminGestionnaireIds = User::whereIn('role', ['admin', 'gestionnaire'])->pluck('id');
+            $ownerIds = collect();
             if ($user->locataire) {
                 $ownerIds = $user->locataire->contrats->pluck('bien.proprietaire.user_id')->filter()->unique();
-                $receivers = User::whereIn('id', $ownerIds)->get();
             }
+            $receivers = User::whereIn('id', $ownerIds->merge($adminGestionnaireIds))->where('id', '!=', $user->id)->get();
+            
         } else if ($user->role === 'proprietaire') {
-            // Un proprio peut écrire à ses locataires UNIQUEMENT (plus d'admin)
+            // Un proprio peut écrire à ses locataires ET à la gestion (Admin/Gestionnaire)
+            $adminGestionnaireIds = User::whereIn('role', ['admin', 'gestionnaire'])->pluck('id');
+            $locataireIds = collect();
             if ($user->proprietaire) {
                 $locataireIds = $user->proprietaire->biens->flatMap->contrats->pluck('locataire.user_id')->filter();
-                $receivers = User::whereIn('id', $locataireIds)->get();
             }
+            $receivers = User::whereIn('id', $locataireIds->merge($adminGestionnaireIds))->where('id', '!=', $user->id)->get();
+            
         } else {
-            // Admin peut écrire à tout le monde
+            // Admin/Gestionnaire peut écrire à tout le monde
             $receivers = User::where('id', '!=', $user->id)->get();
         }
 
