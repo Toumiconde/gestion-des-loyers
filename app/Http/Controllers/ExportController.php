@@ -97,7 +97,7 @@ class ExportController extends Controller
         $headers = ['ID', 'Libellé', 'Type', 'Adresse', 'Surface (m2)', 'Loyer Base', 'Charges', 'Propriétaire', 'Statut'];
         $data = [];
 
-        Bien::with('proprietaire.user')->all()->each(function($b) use (&$data) {
+        Bien::with('proprietaire.user')->get()->each(function($b) use (&$data) {
             $data[] = [
                 $b->id,
                 $b->libelle,
@@ -130,7 +130,7 @@ class ExportController extends Controller
         $headers = ['ID', 'Bien', 'Locataire', 'Date Début', 'Date Fin', 'Loyer', 'Caution', 'Statut'];
         $data = [];
 
-        Contrat::with('bien', 'locataire')->all()->each(function($c) use (&$data) {
+        Contrat::with('bien', 'locataire')->get()->each(function($c) use (&$data) {
             $data[] = [
                 $c->id,
                 $c->bien->libelle ?? 'N/A',
@@ -162,7 +162,7 @@ class ExportController extends Controller
         $headers = ['ID', 'Locataire', 'Bien', 'Mois Concerné', 'Montant', 'Date Paiement', 'Mode', 'Référence', 'Statut'];
         $data = [];
 
-        Paiement::with('contrat.locataire', 'contrat.bien')->all()->each(function($p) use (&$data) {
+        Paiement::with('contrat.locataire', 'contrat.bien')->get()->each(function($p) use (&$data) {
             $data[] = [
                 $p->id,
                 $p->contrat->locataire->nom_complet ?? 'N/A',
