@@ -141,10 +141,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/recherche/{unite}/postuler', [\App\Http\Controllers\RechercheController::class, 'postuler'])->name('recherche.postuler');
 
     // EXPORTS EXCEL (CSV)
-    Route::middleware('role:admin,gestionnaire')->group(function() {
-        Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
+    Route::middleware('role:admin,gestionnaire,proprietaire')->group(function() {
         Route::get('/export/locataires', [\App\Http\Controllers\ExportController::class, 'exportLocataires'])->name('export.locataires');
         Route::get('/export/biens', [\App\Http\Controllers\ExportController::class, 'exportBiens'])->name('export.biens');
+    });
+
+    Route::middleware('role:admin,gestionnaire')->group(function() {
+        Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
         Route::get('/export/contrats', [\App\Http\Controllers\ExportController::class, 'exportContrats'])->name('export.contrats');
         Route::get('/export/paiements', [\App\Http\Controllers\ExportController::class, 'exportPaiements'])->name('export.paiements');
     });

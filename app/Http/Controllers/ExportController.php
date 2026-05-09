@@ -66,7 +66,15 @@ class ExportController extends Controller
         $headers = ['ID', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Adresse', 'Pièce Identité', 'Date Création'];
         $data = [];
         
-        Locataire::all()->each(function($l) use (&$data) {
+        $query = Locataire::query();
+        if (auth()->user()->role === 'proprietaire') {
+            $proprietaireId = auth()->user()->proprietaire->id;
+            $query->whereHas('contrats.bien', function($q) use ($proprietaireId) {
+                $q->where('proprietaire_id', $proprietaireId);
+            });
+        }
+
+        $query->get()->each(function($l) use (&$data) {
             $data[] = [
                 $l->id,
                 $l->nom,
@@ -98,15 +106,20 @@ class ExportController extends Controller
         $headers = ['ID', 'Libellé', 'Type', 'Adresse', 'Surface (m2)', 'Loyer Base', 'Charges', 'Propriétaire', 'Statut'];
         $data = [];
 
-        Bien::with('proprietaire.user')->get()->each(function($b) use (&$data) {
+        $query = Bien::with('proprietaire.user');
+        if (auth()->user()->role === 'proprietaire') {
+            $query->where('proprietaire_id', auth()->user()->proprietaire->id);
+        }
+
+        $query->get()->each(function($b) use (&$data) {
             $data[] = [
                 $b->id,
                 $b->libelle,
                 $b->type,
                 $b->adresse,
                 $b->surface,
-                $b->loyer_base,
-                $b->charges,
+                number_format($b->loyer_base, 0, ',', ' '),
+                number_format($b->charges, 0, ',', ' '),
                 $b->proprietaire->user->name ?? 'N/A',
                 $b->statut
             ];
