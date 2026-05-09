@@ -110,6 +110,14 @@ class MaintenanceController extends Controller
             'sms' => 'Les SMS de relance sont envoyés automatiquement si vous utilisez la fonction de relance rapide sur les impayés.',
             'email' => 'Chaque quittance est automatiquement envoyée par email au locataire si son adresse est renseignée dans sa fiche.',
             
+            // === GESTION DES PROPRIÉTAIRES (INVESTISSEMENT & RENTABILITÉ) ===
+            'rentabilite' => 'Votre rentabilité brute est calculée par le rapport entre vos loyers annuels et la valeur de vos biens. Pour voir votre rentabilité nette (après charges et impôts), consultez votre dashboard dans la section "Performance Financière".',
+            'investissement' => 'Pour optimiser votre investissement : 1. Maintenez vos biens en bon état pour éviter les vacances locatives. 2. Suivez vos charges de maintenance via le menu "Incidents". 3. Utilisez nos rapports mensuels pour votre comptabilité.',
+            'fiscalite' => 'Vos revenus fonciers doivent être déclarés annuellement. Vous pouvez télécharger tous vos reçus et bilans certifiés par l\'agence dans la section "Relevés de Gestion" de votre Dashboard.',
+            'net' => 'Votre revenu net affiché sur le Dashboard correspond à : (Loyers encaissés) - (Charges de maintenance payées) - (Commissions d\'agence). C\'est l\'argent réel qui vous revient.',
+            'performance' => 'Le graphique d\'évolution sur votre Dashboard compare vos revenus actuels à ceux de l\'année précédente. Une courbe ascendante indique une bonne santé de votre patrimoine.',
+            'vacance' => 'La vacance locative est votre plus grande perte. Si un bien est libre, utilisez la fonction "Promotion" ou demandez au gestionnaire de lancer une campagne de diffusion via le Broadcast.',
+
             // === REDIRECTION ADMIN (ZONES RÉSERVÉES) ===
             'serveur' => 'Requête Serveur : Cette question touche à l\'infrastructure technique profonde. Seul l\'administrateur peut intervenir physiquement sur le serveur.',
             'config' => 'Configuration Système : Les réglages globaux (taxes, noms d\'agence, logo système) sont gérés par l\'Admin. Veuillez le contacter pour toute modification.',
