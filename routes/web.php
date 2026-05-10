@@ -81,6 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin,gestionnaire')->group(function() {
         Route::post('/incidents/{incident}/assigner-maintenancier', [IncidentController::class, 'assignerMaintenancier'])->name('incidents.assignerMaintenancier');
         Route::post('/incidents/{incident}/envoyer-devis', [IncidentController::class, 'envoyerDevisProprietaire'])->name('incidents.envoyerDevis');
+        Route::post('/incidents/{incident}/cloturer', [IncidentController::class, 'cloturer'])->name('incidents.cloturer');
         
         // Gestion des maintenanciers
         Route::resource('maintenanciers', MaintenancierController::class);

@@ -4,18 +4,11 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$u = \App\Models\User::find(10);
-$n = $u->notifications()->create([
-    'id' => \Illuminate\Support\Str::uuid(),
-    'type' => 'App\Notifications\DevisIncident',
-    'data' => [
-        'message' => 'Test',
-        'url' => 'http://test'
-    ]
-]);
-
-echo "Created Notification ID: " . $n->id . "\n";
-$dbNotif = \Illuminate\Support\Facades\DB::table('notifications')->where('id', $n->id)->first();
-echo "Raw DB Data: " . $dbNotif->data . "\n";
-
-$u->notifications()->where('id', $n->id)->delete();
+$bien = \App\Models\Bien::where('libelle', 'like', '%Villa Horizon%')->first();
+if ($bien && $bien->proprietaire && $bien->proprietaire->user) {
+    echo "Le bien: " . $bien->libelle . "\n";
+    echo "Proprietaire User Name: " . $bien->proprietaire->user->name . "\n";
+    echo "Proprietaire User Email: " . $bien->proprietaire->user->email . "\n";
+} else {
+    echo "Bien ou Proprietaire introuvable.\n";
+}

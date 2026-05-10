@@ -240,7 +240,44 @@
                         </div>
                     </div>
                     @endif
+            </div>
+            @endif
+
+            {{-- Clôture du chantier (Admin/Gestionnaire) --}}
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']) && $incident->statut === 'en_travaux')
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-[30px] border border-emerald-100 p-8 relative overflow-hidden">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-xl text-emerald-600">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-emerald-900">Travaux en cours</h3>
+                        <p class="text-emerald-700/80 text-sm">Le prestataire a-t-il terminé l'intervention ?</p>
+                    </div>
                 </div>
+
+                <form action="{{ route('incidents.cloturer', $incident) }}" method="POST" class="bg-white rounded-2xl p-6 shadow-sm">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Coût final réel (GNF) *</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-money-bill text-slate-400"></i>
+                                </div>
+                                <input type="number" name="cout_reel" value="{{ $incident->devis_montant }}" min="0" required class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-bold text-slate-800 transition-all">
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">Ce montant générera automatiquement une dépense.</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Note de clôture (Optionnel)</label>
+                            <textarea name="note_cloture" rows="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm text-slate-700 transition-all placeholder:text-slate-400" placeholder="Ex: Remplacement du robinet effectué..."></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i> Marquer le chantier comme Résolu
+                    </button>
+                </form>
             </div>
             @endif
 

@@ -398,4 +398,81 @@ class IncidentController extends Controller
         return redirect()->route('incidents.show', $incident)
                          ->with('success', 'Refus enregistré. Le gestionnaire va être notifié pour renégocier.');
     }
+
+    // ================================================================
+    // WORKFLOW : ÉTAPE 5 - Gestionnaire clôture le chantier (Résolu)
+    // ================================================================
+    public function cloturer(Request $request, Incident $incident)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403);
+        }
+
+        if ($incident->statut !== 'en_travaux') {
+            return back()->with('error', 'Le chantier doit être "En travaux" pour être clôturé.');
+        }
+
+        $request->validate([
+            'cout_reel'    => 'required|numeric|min:0',
+            'note_cloture' => 'nullable|string|max:1000',
+        ]);
+
+        $incident->statut       = 'resolu';
+        $incident->cout_reel    = $request->cout_reel;
+        $incident->note_cloture = $request->note_cloture;
+        $incident->save();
+
+        // 1. Création de la dépense automatique pour la compta
+        \App\Models\Depense::create([
+            'libelle'      => "Clôture Incident : " . $incident->titre . " (" . ($incident->contrat->bien->libelle ?? 'Inconnu') . ")",
+            'categorie'    => 'maintenance',
+            'montant'      => $incident->cout_reel,
+            'date_depense' => now(),
+            'notes'        => "Facture/Coût réel. Note de clôture : " . $incident->note_cloture,
+            'created_by'   => auth()->id(),
+        ]);
+
+        // 2. Notification au propriétaire
+        $proprietaireUser = $incident->contrat->bien->proprietaire->user ?? null;
+        if ($proprietaireUser) {
+            $msgProprio = '✅ <strong>Chantier terminé</strong> pour l\'incident : ' . $incident->titre . '. ';
+            if ($incident->cout_reel > $incident->devis_montant) {
+                $msgProprio .= '<br><span class="text-rose-600">Le coût final est de ' . number_format($incident->cout_reel, 0, ',', ' ') . ' GNF (Le devis initial était de ' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF).</span> ';
+                if ($incident->note_cloture) {
+                    $msgProprio .= '<br><em>Explication : ' . $incident->note_cloture . '</em>';
+                }
+            } else {
+                $msgProprio .= '<br>Le coût final de ' . number_format($incident->cout_reel, 0, ',', ' ') . ' GNF a respecté le devis.';
+            }
+
+            $proprietaireUser->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\IncidentResolu',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $proprietaireUser->id,
+                'data'            => [
+                    'message' => $msgProprio,
+                    'url'     => route('incidents.show', $incident),
+                ],
+            ]);
+        }
+
+        // 3. Notification au locataire
+        $locataireUser = $incident->declare_par ? \App\Models\User::find($incident->declare_par) : null;
+        if ($locataireUser && $locataireUser->isLocataire()) {
+            $locataireUser->notifications()->create([
+                'id'              => \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\IncidentResolu',
+                'notifiable_type' => 'App\Models\User',
+                'notifiable_id'   => $locataireUser->id,
+                'data'            => [
+                    'message' => '🎉 Bonne nouvelle ! Les travaux pour votre signalement <strong>' . $incident->titre . '</strong> sont terminés. Merci de votre patience.',
+                    'url'     => route('incidents.show', $incident),
+                ],
+            ]);
+        }
+
+        return redirect()->route('incidents.show', $incident)
+                         ->with('success', 'Chantier clôturé avec succès ! Dépense générée et notifications envoyées.');
+    }
 }
