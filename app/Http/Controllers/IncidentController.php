@@ -111,10 +111,10 @@ class IncidentController extends Controller
                 'type'            => 'App\Notifications\NouvelIncident',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $staffMember->id,
-                'data'            => json_encode([
+                'data'            => [
                     'message' => '🚨 Nouvel incident signalé : <strong>' . $incident->titre . '</strong>',
                     'url'     => route('incidents.index'),
-                ]),
+                ],
             ]);
         }
 
@@ -300,10 +300,10 @@ class IncidentController extends Controller
                 'type'            => 'App\Notifications\DevisIncident',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $proprietaireUser->id,
-                'data'            => json_encode([
+                'data'            => [
                     'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
                     'url'     => route('incidents.show', $incident),
-                ]),
+                ],
             ]);
         }
 
@@ -337,10 +337,10 @@ class IncidentController extends Controller
                 'type'            => 'App\Notifications\DevisAccepte',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $g->id,
-                'data'            => json_encode([
+                'data'            => [
                     'message' => '✅ Le propriétaire a <strong>accepté</strong> le devis de ' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF pour : <strong>' . $incident->titre . '</strong>. Les travaux peuvent commencer.',
                     'url'     => route('incidents.show', $incident),
-                ]),
+                ],
             ]);
         }
 
@@ -378,10 +378,10 @@ class IncidentController extends Controller
                 'type'            => 'App\Notifications\DevisRefuse',
                 'notifiable_type' => 'App\Models\User',
                 'notifiable_id'   => $g->id,
-                'data'            => json_encode([
+                'data'            => [
                     'message' => '❌ Le propriétaire a <strong>refusé</strong> le devis pour : <strong>' . $incident->titre . '</strong>. Motif : ' . $request->refus_note,
                     'url'     => route('incidents.show', $incident),
-                ]),
+                ],
             ]);
         }
 
