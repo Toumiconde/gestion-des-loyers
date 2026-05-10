@@ -4,7 +4,10 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-$incidents = App\Models\Incident::all();
-foreach($incidents as $i) {
-    echo "ID: {$i->id} | Statut: {$i->statut} | Devis Statut: {$i->devis_statut} | Montant: {$i->devis_montant}\n";
+$i = App\Models\Incident::find(8);
+if ($i) {
+    $i->devis_statut = 'envoye_proprio';
+    $i->statut = 'en_devis';
+    $i->save();
+    echo "Incident 8 mis à jour.\n";
 }

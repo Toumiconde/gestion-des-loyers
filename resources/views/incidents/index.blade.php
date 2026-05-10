@@ -106,6 +106,11 @@
                                     <div class="w-2 h-2 rounded-full {{ $cfg['dot'] }}"></div>
                                     <span class="text-xs font-black {{ $cfg['text'] }} capitalize">{{ $cfg['label'] }}</span>
                                 </div>
+                                @if($i->devis_statut === 'envoye_proprio' && auth()->user()->role === 'proprietaire')
+                                    <span class="mt-2 inline-block px-2 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-md uppercase animate-pulse">
+                                        <i class="fa-solid fa-hand-pointer mr-1"></i> Validation requise
+                                    </span>
+                                @endif
                             @endif
                         </td>
                         <td class="px-8 py-5 text-right">

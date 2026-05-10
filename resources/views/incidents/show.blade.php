@@ -146,36 +146,12 @@
                     @endif
                 </div>
                 @else
-                
-                {{-- Formulaire Assignation Maintenancier (Admin/Gestionnaire) --}}
-                @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
-                    <form action="{{ route('incidents.assignerMaintenancier', $incident) }}" method="POST" class="space-y-4">
-                        @csrf
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Maintenancier</label>
-                            <select name="maintenancier_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium">
-                                <option value="">Sélectionner un prestataire...</option>
-                                @foreach($maintenanciers as $m)
-                                    <option value="{{ $m->id }}">{{ $m->nom }} ({{ $m->specialite }})</option>
-                                @endforeach
-                            </select>
+                    <div class="py-6 text-center">
+                        <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-user-xmark text-slate-300 text-xl"></i>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Montant du devis (GNF)</label>
-                            <input type="number" name="devis_montant" required min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Notes du devis (Optionnel)</label>
-                            <textarea name="devis_note" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                        </div>
-                        <button type="submit" class="w-full py-3 bg-blue-600 text-white font-black rounded-xl text-xs uppercase hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-                            Enregistrer & Assigner
-                        </button>
-                    </form>
-                @else
-                    <p class="text-xs text-slate-400 italic">Aucun technicien assigné pour le moment.</p>
-                @endif
-                
+                        <p class="text-xs font-bold text-slate-400">Aucun intervenant assigné</p>
+                    </div>
                 @endif
             </div>
 

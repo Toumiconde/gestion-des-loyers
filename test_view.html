@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestLoyer - Détails de l&#039;Incident &amp; Chantier</title>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preload" as="style" href="http://127.0.0.1:8000/build/assets/app-CEwZte8_.css" /><link rel="modulepreload" as="script" href="http://127.0.0.1:8000/build/assets/app-DsIK1Lmc.js" /><link rel="stylesheet" href="http://127.0.0.1:8000/build/assets/app-CEwZte8_.css" /><script type="module" src="http://127.0.0.1:8000/build/assets/app-DsIK1Lmc.js"></script>    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 20px; }
+        [x-cloak] { display: none !important; }
+    </style>
+
+    <script>
+        // Mémoriser la position du scroll de la sidebar
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.querySelector('.sidebar-scroll');
+            if (sidebar) {
+                // Restaurer la position
+                const scrollPos = localStorage.getItem('sidebar-scroll-pos');
+                if (scrollPos) {
+                    sidebar.scrollTop = scrollPos;
+                }
+
+                // Sauvegarder la position lors du clic ou du scroll
+                sidebar.addEventListener('scroll', () => {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+                
+                // Sauvegarder aussi juste avant de quitter la page
+                window.addEventListener('beforeunload', () => {
+                    localStorage.setItem('sidebar-scroll-pos', sidebar.scrollTop);
+                });
+            }
+        });
+    </script>
+</head>
+
+<body class="overflow-hidden bg-slate-50">
+<div class="flex h-screen">
+
+    
+    <aside class="w-[280px] bg-[#02132D] text-white flex flex-col shrink-0">
+
+        
+        <div class="p-8 border-b border-white/10">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-xl overflow-hidden">
+                                                                <img src="/storage/logo.png" class="w-full h-full object-contain p-2">
+                                    </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wider leading-tight">
+                        GESTLOYER Immobilier
+                    </h1>
+                    <p class="text-slate-400 text-[10px] uppercase font-black tracking-tighter mt-1">Gestion Immobilière</p>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="flex-1 overflow-y-auto sidebar-scroll px-5 py-6">
+
+            
+            <a href="http://127.0.0.1:8000/dashboard"
+               class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <i class="fa-solid fa-table-columns text-lg text-slate-300"></i>
+                <span class="font-semibold text-slate-200">
+                    Tableau de bord
+                </span>
+            </a>
+            
+            
+            
+            
+            
+            
+            
+                        <a href="http://127.0.0.1:8000/messages"
+               class="flex items-center justify-between px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <i class="fa-solid fa-comment-dots text-base text-slate-400"></i>
+                                                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-[#02132D] rounded-full"></span>
+                                            </div>
+                    <span class="text-sm text-slate-300">Messages</span>
+                </div>
+            </a>
+
+            
+            <div class="mt-6 mb-2 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    ── Gestion
+                </p>
+            </div>
+
+            
+            
+                        <a href="http://127.0.0.1:8000/biens"
+               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <i class="fa-solid fa-building text-base text-slate-400"></i>
+                <span class="text-sm text-slate-300">Biens immobiliers</span>
+            </a>
+
+            <a href="http://127.0.0.1:8000/locataires"
+               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <i class="fa-solid fa-users text-base text-slate-400"></i>
+                <span class="text-sm text-slate-300">Locataires</span>
+            </a>
+            
+            
+            
+            
+            
+            <div class="mt-6 mb-2 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    ── Finance
+                </p>
+            </div>
+
+            
+            
+            
+                        <div class="mt-6 mb-2 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    ── Évolution
+                </p>
+            </div>
+
+            <a href="http://127.0.0.1:8000/feedback"
+               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <i class="fa-solid fa-flask-vial text-base text-amber-400"></i>
+                <span class="text-sm text-slate-300">
+                     Critiques & Évolutions                 </span>
+            </a>
+            
+            
+            <div class="mt-6 mb-2 px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    ── Suivi
+                </p>
+            </div>
+
+                        <a href="http://127.0.0.1:8000/incidents"
+               class="flex items-center justify-between px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <i class="fa-solid fa-triangle-exclamation text-base text-slate-400"></i>
+                                            </div>
+                    <span class="text-sm text-slate-300">Incidents</span>
+                </div>
+                            </a>
+
+            <a href="http://127.0.0.1:8000/documents"
+               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 hover:bg-white/10">
+                <i class="fa-solid fa-folder text-base text-slate-400"></i>
+                <span class="text-sm text-slate-300">Documents</span>
+            </a>
+
+            
+            
+        </div>
+
+        
+        
+    </aside>
+
+    
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#f1f5f9]">
+
+        
+        <header class="flex-none px-8 py-6 flex items-center justify-between bg-[#f1f5f9] z-10">
+            <div>
+                <h2 class="text-4xl font-black text-slate-800">
+                    Détails de l&#039;Incident &amp; Chantier                </h2>
+                            </div>
+
+            
+            <div class="flex items-center gap-5">
+
+                
+                <div x-data="{ 
+                    open: false,
+                    notifCount: 13,
+                    markAsRead() {
+                        if (this.notifCount > 0) {
+                            fetch('http://127.0.0.1:8000/notifications/mark-as-read', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': 'kEYjS6e8CTXVFthf5tKDK2Tsko7RG0oT1dTEgnqG',
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                }
+                            }).then(() => {
+                                this.notifCount = 0;
+                            });
+                        }
+                    }
+                }" class="relative">
+                    <button @click="open = !open; if(open) markAsRead()" class="w-14 h-14 rounded-2xl bg-white shadow-sm relative flex items-center justify-center focus:outline-none hover:shadow-md transition-shadow">
+                        <i class="fa-regular fa-bell text-lg text-slate-600"></i>
+                        <template x-if="notifCount > 0">
+                            <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-black animate-bounce shadow-lg shadow-rose-200">
+                                <span x-text="notifCount"></span>
+                            </div>
+                        </template>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+                        <div class="p-5 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-sm">Notifications</h4>
+                            <template x-if="notifCount > 0">
+                                <button @click="markAsRead()" class="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline cursor-pointer">
+                                    Tout marquer comme lu
+                                </button>
+                            </template>
+                            <template x-if="notifCount == 0">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aucune nouvelle</span>
+                            </template>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Nouvelle notification
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">4 minutes ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Nouvelle notification
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">10 minutes ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Nouvelle notification
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">37 minutes ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Nouvelle notification
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">43 minutes ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Nouvelle notification
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">54 minutes ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Admin/Gestion vous a envoyé un document. Consultez vos documents.
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">4 hours ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Admin/Gestion vous a envoyé un document. Consultez vos documents.
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">4 hours ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        Admin vous a envoyé un document/photo. Veuillez consulter vos documents.
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">5 hours ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        5
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">1 day ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        lk
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">1 day ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        k
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">1 day ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        h
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">1 day ago</span>
+                                </div>
+                                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs text-slate-700 leading-snug">
+                                        📢 Nouvelle Demande : **Jean Kamano** souhaite louer l'unité **Logement Complet** du bien **Villa Horizon**.
+                                    </p>
+                                    <span class="text-[10px] text-slate-400 font-bold mt-2 block">1 day ago</span>
+                                </div>
+                                                    </div>
+                        <a href="http://127.0.0.1:8000/notifications" class="block p-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50">Tout voir</a>
+                    </div>
+                </div>
+
+                
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="bg-white px-4 py-3 rounded-2xl flex items-center gap-4 shadow-sm focus:outline-none hover:shadow-md transition-shadow">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl">
+                            M
+                        </div>
+                        <div class="text-left hidden sm:block">
+                            <h3 class="font-bold text-slate-800">Mamadou Diallo</h3>
+                            <p class="text-sm text-slate-500 capitalize">proprietaire</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm ml-2"></i>
+                    </button>
+
+                    
+                    <div x-show="open"
+                         @click.away="open = false"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50" x-cloak>
+
+                        <a href="http://127.0.0.1:8000/profile" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
+                            <i class="fa-solid fa-user mr-2"></i> Mon Profil
+                        </a>
+
+                        <div class="border-t border-slate-100 my-1"></div>
+
+                        <form method="POST" action="http://127.0.0.1:8000/logout">
+                            <input type="hidden" name="_token" value="kEYjS6e8CTXVFthf5tKDK2Tsko7RG0oT1dTEgnqG" autocomplete="off">                            <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                <i class="fa-solid fa-right-from-bracket mr-2"></i> Se déconnecter
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+
+        
+        <div class="flex-1 overflow-y-auto px-8 pb-8">
+            
+            
+            
+<div class="max-w-6xl mx-auto py-8">
+    
+    <div class="flex items-center justify-between mb-8">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                <li class="inline-flex items-center">
+                    <a href="http://127.0.0.1:8000/dashboard" class="text-slate-400 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-house mr-2"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                        <a href="http://127.0.0.1:8000/incidents" class="text-slate-400 hover:text-blue-600 transition-colors">Incidents</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chevron-right text-slate-300 mx-2 text-xs"></i>
+                        <span class="text-slate-600">[PLOMBERIE] fg</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="flex gap-3">
+                    </div>
+    </div>
+
+    
+    <div class="mb-10 bg-white rounded-[30px] p-8 border border-slate-100 shadow-sm overflow-hidden relative">
+        <div class="flex items-center justify-between relative z-10">
+            
+                            <div class="flex flex-col items-center gap-3 flex-1 relative">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all duration-500 bg-emerald-500 text-white">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Signalé</span>
+                    
+                                    </div>
+                            <div class="flex flex-col items-center gap-3 flex-1 relative">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all duration-500 bg-blue-600 text-white shadow-xl shadow-blue-200 scale-125 z-20">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-blue-600">Devis</span>
+                    
+                                      </div>
+                            <div class="flex flex-col items-center gap-3 flex-1 relative">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all duration-500 bg-slate-100 text-slate-300">
+                        <i class="fa-solid fa-hammer"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Travaux</span>
+                    
+                                    </div>
+                            <div class="flex flex-col items-center gap-3 flex-1 relative">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all duration-500 bg-slate-100 text-slate-300">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Résolu</span>
+                    
+                                    </div>
+                            <div class="flex flex-col items-center gap-3 flex-1 relative">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all duration-500 bg-slate-100 text-slate-300">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payé &amp; Clos</span>
+                    
+                                    </div>
+                    </div>
+        
+        <div class="absolute top-[52px] left-[10%] right-[10%] h-1 bg-slate-100 rounded-full z-0"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4 flex items-center justify-between">
+                    Budget & Coûts
+                    <i class="fa-solid fa-coins text-amber-500"></i>
+                </h3>
+                <div class="space-y-6">
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Estimation</p>
+                        <p class="text-xl font-black text-slate-800">0 GNF</p>
+                    </div>
+                    <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                        <p class="text-[10px] text-emerald-600 font-black uppercase mb-1">Coût Réel (Facturé)</p>
+                        <p class="text-2xl font-black text-emerald-700">9 998 GNF</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Intervenant & Devis</h3>
+                
+                                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-gear"></i>
+                        </div>
+                        <div>
+                                                            <p class="font-black text-slate-800">Prestataire Agréé</p>
+                                <p class="text-xs text-slate-500">Assigné par l'agence</p>
+                                                    </div>
+                    </div>
+                    
+                    
+                    <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Montant du devis</p>
+                        <p class="text-xl font-black text-slate-800">10 000 GNF</p>
+                                                    <p class="text-xs text-slate-500 mt-2 italic">lkmj</p>
+                                                
+                        <div class="mt-4">
+                                                            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase bg-purple-100 text-purple-700">Envoyé au propriétaire</span>
+                                                    </div>
+                    </div>
+
+                    
+                                    </div>
+                            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Localisation</h3>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-building text-slate-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase">Bien concerné</p>
+                            <p class="text-slate-800 font-bold">Villa Horizon</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user-tag text-slate-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase">Locataire actuel</p>
+                            <p class="text-slate-800 font-bold">Jean Kamano</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="lg:col-span-2 space-y-8">
+            
+            
+                        <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-[30px] shadow-lg p-10 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl backdrop-blur-sm">
+                            <i class="fa-solid fa-file-invoice-dollar text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black">
+                                 Validation requise                             </h3>
+                            <p class="text-white/80 text-sm">
+                                 Le gestionnaire a soumis un devis pour ces travaux.                             </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md mb-8 border border-white/20">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-white/80 uppercase tracking-widest text-[10px] font-black">Montant du Devis</span>
+                            <span class="text-2xl font-black">10 000 GNF</span>
+                        </div>
+                                                    <p class="text-sm text-white/90 italic">" lkmj "</p>
+                                            </div>
+
+                                        <div class="flex flex-col sm:flex-row gap-4">
+                        <form action="http://127.0.0.1:8000/incidents/9/accepter-devis" method="POST" class="flex-1">
+                            <input type="hidden" name="_token" value="kEYjS6e8CTXVFthf5tKDK2Tsko7RG0oT1dTEgnqG" autocomplete="off">                            <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-black rounded-xl transition-all shadow-lg shadow-emerald-500/30 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-check"></i> Accepter & Démarrer les travaux
+                            </button>
+                        </form>
+                        
+                        <div x-data="{ openRefus: false }" class="flex-1">
+                            <button @click="openRefus = !openRefus" type="button" class="w-full py-4 bg-rose-500 hover:bg-rose-400 text-white font-black rounded-xl transition-all shadow-lg shadow-rose-500/30 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-xmark"></i> Refuser le devis
+                            </button>
+                            
+                            <div x-show="openRefus" style="display: none;" class="mt-4 bg-white rounded-2xl p-4 text-slate-800 shadow-xl relative z-50">
+                                <form action="http://127.0.0.1:8000/incidents/9/refuser-devis" method="POST">
+                                    <input type="hidden" name="_token" value="kEYjS6e8CTXVFthf5tKDK2Tsko7RG0oT1dTEgnqG" autocomplete="off">                                    <label class="block text-xs font-bold text-slate-500 mb-2">Motif du refus :</label>
+                                    <textarea name="refus_note" required rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-rose-500 mb-3" placeholder="Ex: Trop cher, demandez un autre prestataire..."></textarea>
+                                    <button type="submit" class="w-full py-3 bg-rose-600 text-white font-black rounded-xl text-xs uppercase hover:bg-rose-700 transition-all">Confirmer le refus</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                                    </div>
+            </div>
+            
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-10">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-2xl font-black text-slate-800">[PLOMBERIE] fg</h3>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white">
+                        urgent
+                    </span>
+                </div>
+                
+                <div class="p-8 bg-slate-50 rounded-[30px] border border-slate-100 text-slate-600 leading-relaxed italic mb-10">
+                    " kl "
+                </div>
+
+                
+                
+                            </div>
+
+            
+            <div class="bg-slate-900 rounded-[40px] p-12 text-white relative overflow-hidden group">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-600/10 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+                <div class="relative z-10">
+                    <h3 class="text-2xl font-black mb-4">Assistance IA & Maintenance</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-md mb-8">Utilisez notre outil d'assistance pour trouver des artisans certifiés à Conakry ou pour estimer le coût moyen de cette réparation.</p>
+                    <a href="http://127.0.0.1:8000/maintenance" class="inline-flex items-center gap-3 px-8 py-4 bg-white text-slate-900 font-black rounded-2xl hover:bg-blue-50 transition-all shadow-xl shadow-white/5">
+                        Consulter l'IA Maintenance
+                        <i class="fa-solid fa-brain text-blue-600"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+    </main>
+
+</div>
+    </body>
+</html>
