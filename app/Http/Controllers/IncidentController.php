@@ -218,10 +218,10 @@ class IncidentController extends Controller
                         'type'            => 'App\Notifications\DevisIncident',
                         'notifiable_type' => 'App\Models\User',
                         'notifiable_id'   => $proprietaireUser->id,
-                        'data'            => json_encode([
+                        'data'            => [
                             'message' => '📋 Un devis de <strong>' . number_format($incident->devis_montant, 0, ',', ' ') . ' GNF</strong> attend votre validation pour l\'incident : <strong>' . $incident->titre . '</strong>',
                             'url'     => route('incidents.show', $incident),
-                        ]),
+                        ],
                     ]);
                 }
             }
