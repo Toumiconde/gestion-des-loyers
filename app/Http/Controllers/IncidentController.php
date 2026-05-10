@@ -223,6 +223,13 @@ class IncidentController extends Controller
                             'url'     => route('incidents.show', $incident),
                         ],
                     ]);
+                    $incident->save();
+                    return redirect()->route('incidents.show', $incident)
+                                     ->with('success', 'Incident mis à jour et devis envoyé au propriétaire : ' . $proprietaireUser->name);
+                } else {
+                    $incident->save();
+                    return redirect()->route('incidents.show', $incident)
+                                     ->with('error', 'Incident mis à jour mais impossible de notifier le propriétaire (profil non lié).');
                 }
             }
         }
@@ -305,10 +312,13 @@ class IncidentController extends Controller
                     'url'     => route('incidents.show', $incident),
                 ],
             ]);
+            
+            return redirect()->route('incidents.show', $incident)
+                             ->with('success', 'Devis envoyé avec succès au propriétaire : ' . $proprietaireUser->name);
         }
 
         return redirect()->route('incidents.show', $incident)
-                         ->with('success', 'Devis envoyé au propriétaire. En attente de sa validation.');
+                         ->with('error', 'Erreur : Impossible de trouver le compte utilisateur du propriétaire pour envoyer la notification.');
     }
 
     // ================================================================

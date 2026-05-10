@@ -4,6 +4,18 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-\Illuminate\Support\Facades\DB::table('notifications')->where('data', 'like', '"%')->delete();
-\App\Models\Incident::where('devis_statut', 'envoye_proprio')->update(['devis_statut' => 'en_attente', 'statut' => 'en_devis']);
-echo "Notifications deleted and incidents reset.\n";
+$u = \App\Models\User::find(10);
+$n = $u->notifications()->create([
+    'id' => \Illuminate\Support\Str::uuid(),
+    'type' => 'App\Notifications\DevisIncident',
+    'data' => [
+        'message' => 'Test',
+        'url' => 'http://test'
+    ]
+]);
+
+echo "Created Notification ID: " . $n->id . "\n";
+$dbNotif = \Illuminate\Support\Facades\DB::table('notifications')->where('id', $n->id)->first();
+echo "Raw DB Data: " . $dbNotif->data . "\n";
+
+$u->notifications()->where('id', $n->id)->delete();
