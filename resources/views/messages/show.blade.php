@@ -60,10 +60,15 @@
                 </span>
             @endif
         </div>
-
         <div class="p-10 bg-slate-50/50">
-            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-slate-700 leading-relaxed text-lg whitespace-pre-line mb-6">
-                {{ $message->content }}
+            <div class="message-content bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-slate-700 leading-relaxed text-lg mb-6">
+                <style>
+                    .message-content a { color: #2563eb; font-weight: bold; text-decoration: underline; }
+                    .message-content p { margin-bottom: 1rem; }
+                    .message-content p:last-child { margin-bottom: 0; }
+                    .message-content strong { font-weight: 900; color: #0f172a; }
+                </style>
+                {!! \Illuminate\Support\Str::markdown($message->content) !!}
             </div>
 
             @if($message->attachment_path)
@@ -97,9 +102,11 @@
                 </div>
             </div>
             @endif
-             @php
-            $isStaffSender = in_array($message->sender->role ?? '', ['admin', 'gestionnaire']);
-            $canReply = $message->can_reply && !$isStaffSender;
+            @php
+            $senderRole = $message->sender->role ?? '';
+            // On ne peut pas répondre à l'Administrateur (flux descendant uniquement)
+            // Mais on peut répondre au Gestionnaire
+            $canReply = ($message->can_reply ?? true) && ($senderRole !== 'admin');
         @endphp
 
         @if($message->receiver_id === auth()->id())

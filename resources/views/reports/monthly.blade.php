@@ -31,7 +31,7 @@
 
         <div class="p-12">
             {{-- Résumé Financier --}}
-            <div class="grid grid-cols-3 gap-8 mb-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
                 <div class="p-6 bg-emerald-50 rounded-3xl border border-emerald-100">
                     <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Revenus</p>
                     <p class="text-2xl font-black text-slate-800">+ {{ number_format($revenus->sum('montant'), 0, ',', ' ') }}</p>
@@ -40,9 +40,13 @@
                     <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Dépenses</p>
                     <p class="text-2xl font-black text-slate-800">- {{ number_format($depenses->sum('montant'), 0, ',', ' ') }}</p>
                 </div>
+                <div class="p-6 bg-slate-100 rounded-3xl border border-slate-200">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Commission Agence</p>
+                    <p class="text-2xl font-black text-slate-800">- {{ number_format($fraisGestion, 0, ',', ' ') }}</p>
+                </div>
                 <div class="p-6 bg-slate-900 rounded-3xl text-white">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bilan Net</p>
-                    <p class="text-2xl font-black text-white">{{ number_format($revenus->sum('montant') - $depenses->sum('montant'), 0, ',', ' ') }}</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bilan Net (À verser)</p>
+                    <p class="text-2xl font-black text-white">{{ number_format($revenus->sum('montant') - $depenses->sum('montant') - $fraisGestion, 0, ',', ' ') }}</p>
                 </div>
             </div>
 

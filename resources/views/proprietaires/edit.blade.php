@@ -112,6 +112,17 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-black text-slate-700 mb-2">Commission Agence (%)</label>
+                        <div class="relative">
+                            <input type="number" name="commission_rate" value="{{ old('commission_rate', $proprietaire->commission_rate) }}"
+                                   step="0.01" min="0" max="100"
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                   required>
+                            <i class="fa-solid fa-percent absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-black text-slate-700 mb-2">RIB Bancaire (N° de compte)</label>
                         <div class="relative">
                             <input type="text" name="rib_bancaire" value="{{ old('rib_bancaire', $proprietaire->rib_bancaire) }}"

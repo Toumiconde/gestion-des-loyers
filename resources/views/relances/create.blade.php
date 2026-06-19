@@ -61,7 +61,8 @@
                                 <option value="">-- Choisir un contrat --</option>
                                 @foreach($contrats as $c)
                                 <option value="{{ $c->id }}" {{ old('contrat_id') == $c->id ? 'selected' : '' }}>
-                                    {{ $c->locataire->nom }} — {{ $c->bien->libelle }}
+                                    {{ $c->locataire->nom }} — {{ $c->bien->libelle }} 
+                                    ({{ $c->statut === 'actif' ? 'ANCIEN' : 'NOUVEAU' }})
                                 </option>
                                 @endforeach
                             </select>

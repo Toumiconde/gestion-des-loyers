@@ -18,6 +18,9 @@ class MessageController extends Controller
         $query = Message::with(['sender', 'receiver'])->orderBy('created_at', 'desc');
 
         if ($request->get('filter') === 'support') {
+            if ($user->role === 'comptable') {
+                abort(403, 'Accès non autorisé au support technique.');
+            }
             $query->where('is_support', true);
         }
 
@@ -30,6 +33,11 @@ class MessageController extends Controller
                 $q->where('sender_id', $user->id)
                   ->orWhere('receiver_id', $user->id);
             });
+
+            // Pour le comptable, on exclut TOUJOURS le support technique de la liste générale
+            if ($user->role === 'comptable') {
+                $query->where('is_support', false);
+            }
         }
 
         $messages = $query->get();
@@ -58,27 +66,13 @@ class MessageController extends Controller
         $user = Auth::user();
         $receivers = collect();
 
-        if ($user->role === 'locataire') {
-            // Un locataire peut écrire UNIQUEMENT à la gestion (Gestionnaire/Comptable)
-            // Plus de pont direct avec le propriétaire pour rester pro
+        if ($user->role === 'locataire' || $user->role === 'proprietaire') {
+            // Locataires et Propriétaires écrivent UNIQUEMENT au staff (Gestionnaire/Comptable)
             $receivers = User::whereIn('role', ['gestionnaire', 'comptable'])
                              ->where('id', '!=', $user->id)
                              ->get();
-            
-        } else if ($user->role === 'proprietaire') {
-            // Un proprio peut écrire à ses locataires ET à la gestion (Gestionnaire/Comptable seulement, pas Admin)
-            $locataireIds = collect();
-            if ($user->proprietaire) {
-                $locataireIds = $user->proprietaire->biens->flatMap->contrats->pluck('locataire.user_id')->filter()->unique();
-            }
-            
-            $receivers = User::where(function($q) use ($locataireIds) {
-                $q->whereIn('role', ['gestionnaire', 'comptable'])
-                  ->orWhereIn('id', $locataireIds);
-            })->where('id', '!=', $user->id)->get();
-            
         } else {
-            // Admin/Gestionnaire/Comptable peut écrire à tout le monde
+            // L'agence (Admin/Gestionnaire) peut écrire à tout le monde
             $receivers = User::where('id', '!=', $user->id)->get();
         }
 

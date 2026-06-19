@@ -48,6 +48,7 @@
                     <span>Non lus</span>
                     <span class="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full">{{ $messages->where('is_read', false)->where('receiver_id', auth()->id())->count() }}</span>
                 </a>
+                @if(auth()->user()->role !== 'comptable')
                 <a href="{{ route('messages.index', ['filter' => 'support']) }}" 
                    class="w-full flex items-center justify-between p-3 {{ request('filter') === 'support' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50' }} rounded-xl font-bold text-sm transition-all">
                     <span>Support Technique</span>
@@ -59,6 +60,7 @@
                             })->count() }}
                     </span>
                 </a>
+                @endif
                 <a href="{{ route('messages.archived') }}" class="w-full flex items-center justify-between p-3 text-slate-500 hover:bg-slate-50 rounded-xl font-bold text-sm transition-all">
                     <span>Historique</span>
                     <i class="fa-solid fa-clock-rotate-left text-[10px] opacity-30"></i>

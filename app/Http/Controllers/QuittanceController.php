@@ -36,19 +36,18 @@ class QuittanceController extends Controller
      */
     public function index(Request $request)
     {
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
+        
         $query = Quittance::with('paiement.contrat.locataire', 'paiement.contrat.bien');
 
         // Filtrage par date
-        if ($request->filled('year')) {
-            $query->whereHas('paiement', function($q) use ($request) {
-                $q->whereYear('mois_concerne', $request->year);
-            });
-        }
-        if ($request->filled('month')) {
-            $query->whereHas('paiement', function($q) use ($request) {
-                $q->whereMonth('mois_concerne', $request->month);
-            });
-        }
+        $query->whereHas('paiement', function($q) use ($selectedYear, $selectedMonth) {
+            $q->whereYear('mois_concerne', $selectedYear);
+            if ($selectedMonth) {
+                $q->whereMonth('mois_concerne', $selectedMonth);
+            }
+        });
 
         if (auth()->user()->isProprietaire() && auth()->user()->proprietaire) {
             $query->whereHas('paiement.contrat.bien', function($q) {

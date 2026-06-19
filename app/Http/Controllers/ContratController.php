@@ -11,20 +11,30 @@ class ContratController extends Controller
 {
     private function authorizeEditor()
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->isProprietaire()) {
-            abort(403, 'Accès non autorisé - Seuls les administrateurs et propriétaires peuvent gérer les contrats.');
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403, 'Accès non autorisé - Seuls les administrateurs et gestionnaires peuvent gérer les contrats.');
         }
     }
 
     public function index(Request $request)
     {
-        $selectedYear = $request->get('year', session('selected_year', date('Y')));
-        $selectedMonth = $request->get('month');
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
+        $search = $request->get('search');
 
         $query = Contrat::with('bien', 'locataire')
                         ->whereYear('date_debut', $selectedYear);
 
-        if (auth()->user()->isAdmin() && $selectedMonth) {
+        // Recherche multi-critères
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('numero_contrat', 'LIKE', "%{$search}%")
+                  ->orWhereHas('locataire', fn($sq) => $sq->where('nom', 'LIKE', "%{$search}%")->orWhere('prenom', 'LIKE', "%{$search}%"))
+                  ->orWhereHas('bien', fn($sq) => $sq->where('libelle', 'LIKE', "%{$search}%"));
+            });
+        }
+
+        if (in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']) && $selectedMonth) {
             $query->whereMonth('date_debut', $selectedMonth);
         }
 

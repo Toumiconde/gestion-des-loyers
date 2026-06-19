@@ -11,35 +11,8 @@
     </div>
 </div>
 
-{{-- Filtres --}}
-<div class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-    <form action="{{ route('quittances.index') }}" method="GET" class="flex flex-wrap items-center gap-6">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                <i class="fa-solid fa-filter"></i>
-            </div>
-            <span class="font-bold text-slate-700">Filtrer par période :</span>
-        </div>
-
-        <select name="year" onchange="this.form.submit()" class="bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
-            <option value="">Année (Toutes)</option>
-            @foreach($years as $year)
-                <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
-            @endforeach
-        </select>
-
-        <select name="month" onchange="this.form.submit()" class="bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
-            <option value="">Mois (Tous)</option>
-            @foreach($months as $num => $name)
-                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
-            @endforeach
-        </select>
-
-        @if(request('year') || request('month'))
-        <a href="{{ route('quittances.index') }}" class="text-xs font-black text-rose-500 uppercase tracking-widest hover:text-rose-700 transition-colors">Réinitialiser</a>
-        @endif
-    </form>
 </div>
+
 
 <div class="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
     <div class="overflow-x-auto">

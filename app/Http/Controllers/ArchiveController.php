@@ -15,13 +15,23 @@ class ArchiveController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
         
         // Requêtes de base pour les éléments supprimés
-        $biens = Bien::onlyTrashed()->with('proprietaire.user');
-        $locataires = Locataire::onlyTrashed();
-        $proprietaires = Proprietaire::onlyTrashed()->with('user');
-        $messages = Message::onlyTrashed()->with(['sender', 'receiver']);
-        $contrats = Contrat::onlyTrashed()->with(['bien', 'locataire']);
+        $biens = Bien::onlyTrashed()->with('proprietaire.user')->whereYear('created_at', $selectedYear);
+        $locataires = Locataire::onlyTrashed()->whereYear('created_at', $selectedYear);
+        $proprietaires = Proprietaire::onlyTrashed()->with('user')->whereYear('created_at', $selectedYear);
+        $messages = Message::onlyTrashed()->with(['sender', 'receiver'])->whereYear('created_at', $selectedYear);
+        $contrats = Contrat::onlyTrashed()->with(['bien', 'locataire'])->whereYear('created_at', $selectedYear);
+
+        if ($selectedMonth) {
+            $biens->whereMonth('created_at', $selectedMonth);
+            $locataires->whereMonth('created_at', $selectedMonth);
+            $proprietaires->whereMonth('created_at', $selectedMonth);
+            $messages->whereMonth('created_at', $selectedMonth);
+            $contrats->whereMonth('created_at', $selectedMonth);
+        }
 
         // Filtrage par rôle si ce n'est pas un admin
         if ($user->role !== 'admin') {

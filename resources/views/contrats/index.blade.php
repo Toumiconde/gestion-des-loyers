@@ -19,7 +19,7 @@
         </a>
         @endif
 
-        @if(auth()->user()->isAdmin() || auth()->user()->isProprietaire())
+        @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
         <a href="{{ route('contrats.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 shadow-xl shadow-slate-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-file-signature mr-2 group-hover:scale-110 transition-transform"></i>
@@ -29,31 +29,35 @@
     </div>
 </div>
 
-@if(auth()->user()->isAdmin())
+@if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
 <div class="mb-8 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
     <form action="{{ route('contrats.index') }}" method="GET" class="flex flex-wrap items-end gap-6">
-        <div class="flex-1 min-w-[200px]">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Filtrer par mois de signature (Début)</label>
-            <select name="month" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:ring-2 focus:ring-slate-500 outline-none font-bold text-sm">
+        {{-- Barre de recherche --}}
+        <div class="flex-1 min-w-[300px]">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Rechercher un contrat</label>
+            <div class="relative">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="N° Contrat, Nom Locataire ou Bien..." 
+                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-12 pr-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            </div>
+        </div>
+
+        <div class="w-48">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Mois Début</label>
+            <select name="month" onchange="this.form.submit()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm">
                 <option value="">Tous les mois</option>
                 @foreach($months as $num => $name)
                     <option value="{{ $num }}" {{ $selectedMonth == $num ? 'selected' : '' }}>{{ $name }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="w-32">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Année</label>
-            <select name="year" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:ring-2 focus:ring-slate-500 outline-none font-bold text-sm">
-                @for($y = 2024; $y <= 2030; $y++)
-                    <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                @endfor
-            </select>
-        </div>
-        <button type="submit" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all">
-            Appliquer le tri
+        
+        <button type="submit" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all h-[46px]">
+            Filtrer
         </button>
-        @if($selectedMonth || $selectedYear != date('Y'))
-            <a href="{{ route('contrats.index') }}" class="text-xs font-black text-slate-400 uppercase hover:text-rose-500 transition-colors py-3">Réinitialiser</a>
+
+        @if(request('search') || $selectedMonth || $selectedYear != date('Y'))
+            <a href="{{ route('contrats.index') }}" class="text-xs font-black text-slate-400 uppercase hover:text-rose-500 transition-colors py-3">Effacer</a>
         @endif
     </form>
 </div>
@@ -107,6 +111,11 @@
                             <a href="{{ route('contrats.show', $c) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm" title="Détails">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
+                            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
+                            <a href="{{ route('paiements.create', ['contrat_id' => $c->id]) }}" class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Encaisser un loyer">
+                                <i class="fa-solid fa-money-bill-wave text-sm"></i>
+                            </a>
+                            @endif
                             @if(auth()->user()->isAdmin() || auth()->user()->isProprietaire())
                             <a href="{{ route('contrats.edit', $c) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Modifier">
                                 <i class="fa-solid fa-pen text-sm"></i>

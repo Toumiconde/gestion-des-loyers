@@ -10,8 +10,11 @@ class RelanceController extends Controller
 {
     public function index()
     {
-        $relances = Relance::with('contrat.locataire')->paginate(10);
-        return view('relances.index', compact('relances'));
+        $selectedYear = session('selected_year', date('Y'));
+        $relances = Relance::with('contrat.locataire')
+            ->whereYear('date_envoi', $selectedYear)
+            ->paginate(10);
+        return view('relances.index', compact('relances', 'selectedYear'));
     }
 
     public function store(Request $request)

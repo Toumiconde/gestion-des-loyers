@@ -10,9 +10,9 @@ class BienController extends Controller
 {
     private function authorizeEditor()
     {
-        // Les admins, gestionnaires et propriétaires peuvent éditer/créer des biens
-        if (!auth()->user()->isAdmin() && !auth()->user()->isProprietaire()) {
-            abort(403, 'Accès non autorisé - Seuls les administrateurs et propriétaires peuvent gérer les biens.');
+        // Seuls les admins et gestionnaires peuvent gérer le parc immobilier
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403, 'Accès non autorisé - Seuls les administrateurs et gestionnaires peuvent gérer les biens.');
         }
     }
 
@@ -67,14 +67,15 @@ class BienController extends Controller
         $validated = $request->validate([
             'proprietaire_id' => 'required|exists:proprietaires,id',
             'libelle'         => 'required|string|max:200',
-            'type'            => 'required|in:appartement,maison,studio,bureau,commerce,autre',
+            'type'            => 'required|in:appartement,maison,studio,bureau,commerce,immeuble,autre',
             'adresse'         => 'required|string',
             'surface'         => 'nullable|numeric|min:1',
             'loyer_base'      => 'required|numeric|min:1',
             'charges'         => 'nullable|numeric|min:0',
             'depot_garantie'  => 'nullable|numeric|min:0',
             'nombre_chambres' => 'required|integer|min:0',
-            'type_douche'     => 'required|in:interne,externe',
+            'type_douche'     => 'required|in:interne,externe,les_deux',
+            'details_etage'   => 'nullable|string|max:255',
         ]);
 
         $bien = Bien::create($validated);
@@ -141,13 +142,14 @@ class BienController extends Controller
         $this->authorizeEditor();
         $validated = $request->validate([
             'libelle'        => 'required|string|max:200',
-            'type'           => 'required|in:appartement,maison,studio,bureau,commerce,autre',
+            'type'           => 'required|in:appartement,maison,studio,bureau,commerce,immeuble,autre',
             'adresse'        => 'required|string',
             'surface'        => 'nullable|numeric|min:1',
             'loyer_base'     => 'required|numeric|min:1',
             'charges'        => 'nullable|numeric|min:0',
             'depot_garantie' => 'nullable|numeric|min:0',
             'statut'         => 'required|in:disponible,occupe,en_travaux,archive',
+            'details_etage'  => 'nullable|string|max:255',
         ]);
 
         $bien->update($validated);

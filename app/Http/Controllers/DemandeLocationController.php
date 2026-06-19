@@ -13,7 +13,10 @@ class DemandeLocationController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $query = DemandeLocation::with(['uniteLocative.bien.proprietaire.user', 'uniteLocative.bien.documents', 'user']);
+        $selectedYear = session('selected_year', date('Y'));
+        
+        $query = DemandeLocation::with(['uniteLocative.bien.proprietaire.user', 'uniteLocative.bien.documents', 'user'])
+            ->whereYear('created_at', $selectedYear);
 
         if ($user->role === 'proprietaire') {
             $proprietaireId = $user->proprietaire->id;
@@ -33,7 +36,7 @@ class DemandeLocationController extends Controller
                 ->whereHas('uniteLocative.bien', function($q) use ($user) {
                     $q->where('proprietaire_id', $user->proprietaire->id);
                 })->update(['is_new' => false]);
-        } elseif ($user->role === 'admin') {
+        } elseif (in_array($user->role, ['admin', 'gestionnaire'])) {
             DemandeLocation::where('is_new', true)->update(['is_new' => false]);
         }
 
@@ -48,9 +51,9 @@ class DemandeLocationController extends Controller
 
         $demande->update(['statut' => 'valide_proprietaire']);
 
-        // Notification à l'Admin
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\ProfileUpdated(Auth::user(), "✅ Demande de location #{$demande->id} validée par le propriétaire **{$demande->uniteLocative->bien->proprietaire->user->name}**. Vous pouvez maintenant donner l'accord final."));
+        // Notification à l'Admin et au Gestionnaire
+        $adminsAndManagers = \App\Models\User::whereIn('role', ['admin', 'gestionnaire'])->get();
+        \Illuminate\Support\Facades\Notification::send($adminsAndManagers, new \App\Notifications\ProfileUpdated(Auth::user(), "✅ Demande de location #{$demande->id} validée par le propriétaire **{$demande->uniteLocative->bien->proprietaire->user->name}**. Vous pouvez maintenant donner l'accord final."));
 
         // Message au locataire
         \App\Models\Message::create([
@@ -72,7 +75,7 @@ class DemandeLocationController extends Controller
 
     public function validerAdmin(DemandeLocation $demande)
     {
-        if (Auth::user()->role !== 'admin') {
+        if (!in_array(Auth::user()->role, ['admin', 'gestionnaire'])) {
             abort(403);
         }
 
@@ -106,6 +109,9 @@ class DemandeLocationController extends Controller
             $messageContent .= "\n\nVeuillez procéder au paiement du premier loyer pour finaliser votre emménagement.";
         }
 
+        $paymentLink = route('paiements.create', ['contrat_id' => $contrat->id]);
+        $messageContent .= "\n\n[Cliquez ici pour effectuer votre premier versement]({$paymentLink})";
+
         \App\Models\Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $demande->user_id,
@@ -119,6 +125,9 @@ class DemandeLocationController extends Controller
             'action' => 'modification',
             'description' => "L'administrateur a validé la demande #{$demande->id}.",
         ]);
+
+        // Notification (cloche) pour le locataire
+        $demande->user->notify(new \App\Notifications\ProfileUpdated(Auth::user(), "🎉 Félicitations ! Votre demande de location pour **{$demande->uniteLocative->bien->libelle}** a été acceptée. Veuillez vérifier vos messages."));
 
         // Envoyer l'email au locataire
         $this->envoyerEmailAcceptation($demande);
@@ -135,6 +144,9 @@ class DemandeLocationController extends Controller
             'action' => 'modification',
             'description' => "La demande #{$demande->id} a été rejetée.",
         ]);
+
+        // Notification (cloche) pour le locataire
+        $demande->user->notify(new \App\Notifications\ProfileUpdated(Auth::user(), "❌ Malheureusement, votre demande de location pour **{$demande->uniteLocative->bien->libelle}** n'a pas pu être retenue."));
 
         return back()->with('error', 'La demande a été rejetée.');
     }

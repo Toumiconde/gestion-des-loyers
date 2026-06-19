@@ -83,16 +83,25 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @php
-                        $charges = $quittance->paiement->contrat->bien->charges ?? 0;
-                        $loyerBase = $quittance->paiement->montant - $charges - ($quittance->paiement->penalite ?? 0);
+                        $paiement     = $quittance->paiement;
+                        $contrat      = $paiement->contrat;
+                        $charges      = $contrat->bien->charges ?? 0;
+                        $loyerContrat = $contrat->loyer; // Prix exact du loyer contractuel
+                        $totalVerse   = $paiement->total_verse > 0 ? $paiement->total_verse : $paiement->montant;
+                        $soldeRestant = $paiement->solde_restant ?? max(0, $loyerContrat - $totalVerse);
+                        $loyerAttendu = $paiement->loyer_attendu > 0 ? $paiement->loyer_attendu : $loyerContrat;
                     @endphp
+
+                    {{-- Loyer Principal --}}
                     <tr>
                         <td class="py-6 px-2">
                             <p class="font-black text-slate-800">Loyer Principal</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Occupation mensuelle du logement</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Prix contractuel — occupation mensuelle du logement</p>
                         </td>
-                        <td class="py-6 px-2 text-right font-black text-slate-800">{{ number_format($loyerBase, 0, ',', ' ') }}</td>
+                        <td class="py-6 px-2 text-right font-black text-slate-800">{{ number_format($loyerContrat, 0, ',', ' ') }}</td>
                     </tr>
+
+                    {{-- Charges locatives si applicable --}}
                     @if($charges > 0)
                     <tr>
                         <td class="py-6 px-2">
@@ -102,23 +111,65 @@
                         <td class="py-6 px-2 text-right font-black text-slate-800">{{ number_format($charges, 0, ',', ' ') }}</td>
                     </tr>
                     @endif
-                    @if($quittance->paiement->penalite > 0)
+
+                    {{-- Pénalités de retard si applicable --}}
+                    @if($paiement->penalite > 0)
                     <tr>
                         <td class="py-6 px-2">
                             <p class="font-black text-rose-600">Pénalités de retard</p>
                         </td>
-                        <td class="py-6 px-2 text-right font-black text-rose-600">{{ number_format($quittance->paiement->penalite, 0, ',', ' ') }}</td>
+                        <td class="py-6 px-2 text-right font-black text-rose-600">{{ number_format($paiement->penalite, 0, ',', ' ') }}</td>
                     </tr>
                     @endif
-                    <tr class="bg-slate-50/50">
-                        <td class="py-8 px-6 rounded-l-[20px]">
-                            <p class="text-xl font-black text-slate-900 uppercase tracking-tighter">Total Net Payé</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Règlement reçu le {{ $quittance->paiement->date_paiement->format('d/m/Y') }} par {{ $quittance->paiement->mode_reglement }}</p>
+
+                    {{-- Report de solde du mois précédent --}}
+                    @if($loyerAttendu > $loyerContrat)
+                    <tr>
+                        <td class="py-6 px-2">
+                            <p class="font-black text-amber-700">Report solde mois précédent</p>
+                            <p class="text-[10px] text-amber-500 font-bold uppercase">Solde non réglé reporté sur ce mois</p>
                         </td>
-                        <td class="py-8 px-6 text-right rounded-r-[20px]">
-                            <p class="text-3xl font-black text-blue-600 tracking-tight">{{ number_format($quittance->paiement->montant, 0, ',', ' ') }} <span class="text-xs">GNF</span></p>
+                        <td class="py-6 px-2 text-right font-black text-amber-700">{{ number_format($loyerAttendu - $loyerContrat, 0, ',', ' ') }}</td>
+                    </tr>
+                    @endif
+
+                    {{-- Total Net Payé --}}
+                    <tr class="bg-blue-50/50">
+                        <td class="py-6 px-6 rounded-l-[20px]">
+                            <p class="text-lg font-black text-slate-900 uppercase tracking-tighter">Total Net Versé</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Règlement reçu le {{ $paiement->date_paiement->format('d/m/Y') }} par {{ str_replace('_', ' ', $paiement->mode_reglement) }}</p>
+                        </td>
+                        <td class="py-6 px-6 text-right rounded-r-[20px]">
+                            <p class="text-3xl font-black text-blue-600 tracking-tight">{{ number_format($totalVerse, 0, ',', ' ') }} <span class="text-xs">GNF</span></p>
                         </td>
                     </tr>
+
+                    {{-- Solde Restant --}}
+                    @if($soldeRestant > 0)
+                    <tr class="bg-amber-50">
+                        <td class="py-6 px-6 rounded-l-[20px]">
+                            <p class="text-lg font-black text-amber-700 uppercase tracking-tighter flex items-center gap-2">
+                                <i class="fa-solid fa-circle-exclamation"></i> Solde Restant à Payer
+                            </p>
+                            <p class="text-[10px] text-amber-500 font-bold uppercase">Ce montant reste dû et sera reporté sur le prochain mois</p>
+                        </td>
+                        <td class="py-6 px-6 text-right rounded-r-[20px]">
+                            <p class="text-3xl font-black text-amber-600 tracking-tight">{{ number_format($soldeRestant, 0, ',', ' ') }} <span class="text-xs">GNF</span></p>
+                        </td>
+                    </tr>
+                    @else
+                    <tr class="bg-emerald-50/50">
+                        <td class="py-4 px-6 rounded-l-[20px]">
+                            <p class="font-black text-emerald-700 flex items-center gap-2">
+                                <i class="fa-solid fa-check-double"></i> Loyer du mois intégralement soldé
+                            </p>
+                        </td>
+                        <td class="py-4 px-6 text-right rounded-r-[20px]">
+                            <p class="font-black text-emerald-600">0 <span class="text-xs">GNF</span></p>
+                        </td>
+                    </tr>
+                    @endif
+
                 </tbody>
             </table>
         </div>

@@ -148,7 +148,9 @@
                     <div class="pt-3 border-t border-slate-100 mt-2 text-center space-y-2">
                         <p class="text-slate-500 text-[11px] font-medium leading-relaxed">
                             Nouveau sur GESTLOYER ? <br/>
-                            <span class="text-slate-900 font-bold">Contactez votre administrateur pour vos accès.</span>
+                            <a href="{{ route('register') }}" class="text-blue-600 font-black hover:underline tracking-wide uppercase text-[10px]">
+                                Créer un compte gratuitement
+                            </a>
                         </p>
                         <p class="text-slate-400 text-[11px] font-medium leading-relaxed">
                             En cas d'oubli de mot de passe, veuillez appeler votre service :<br/>

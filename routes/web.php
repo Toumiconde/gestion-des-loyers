@@ -31,7 +31,10 @@ Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return view('welcome');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -41,28 +44,49 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding.index');
     Route::post('/onboarding/select', [OnboardingController::class, 'selectRole'])->name('onboarding.select');
 
-    // GESTION (Lecture seule pour Propriétaires, Full pour Admin/Gestionnaire)
+    // GESTION (Full pour Admin/Gestionnaire)
     Route::middleware('role:admin,gestionnaire')->group(function() {
-        Route::resource('proprietaires', ProprietaireController::class);
+        Route::resource('proprietaires', ProprietaireController::class)->except(['index', 'show']);
         Route::resource('biens', BienController::class)->except(['index', 'show']);
         Route::resource('locataires', LocataireController::class)->except(['index', 'show']);
-        Route::resource('contrats', ContratController::class);
+        Route::resource('contrats', ContratController::class)->except(['index', 'show']);
         Route::resource('unites-locatives', \App\Http\Controllers\UniteLocativeController::class);
     });
 
-    Route::middleware('role:proprietaire,locataire,admin,gestionnaire')->group(function() {
+    // GESTION (Lecture pour Staff + Clients selon logique controlleur)
+    Route::middleware('role:admin,gestionnaire,comptable,proprietaire,locataire')->group(function() {
+        Route::get('/proprietaires', [ProprietaireController::class, 'index'])->name('proprietaires.index');
+        Route::get('/proprietaires/{proprietaire}', [ProprietaireController::class, 'show'])->name('proprietaires.show');
+        Route::get('/contrats', [ContratController::class, 'index'])->name('contrats.index');
+        Route::get('/contrats/{contrat}', [ContratController::class, 'show'])->name('contrats.show');
+    });
+
+    Route::middleware('role:proprietaire,locataire,admin,gestionnaire,comptable')->group(function() {
         Route::get('/biens', [BienController::class, 'index'])->name('biens.index');
         Route::get('/biens/{bien}', [BienController::class, 'show'])->name('biens.show');
         Route::get('/locataires', [LocataireController::class, 'index'])->name('locataires.index');
         Route::get('/locataires/{locataire}', [LocataireController::class, 'show'])->name('locataires.show');
     });
 
-    // FINANCE (Admin/Gestionnaire seulement)
-    Route::middleware('role:admin,gestionnaire')->group(function() {
-        Route::resource('paiements', PaiementController::class);
+    // FINANCE (Consultation pour tous, Création pour locataires, Gestion pour Admin/Comptable)
+    Route::middleware('role:admin,gestionnaire,locataire,comptable')->group(function() {
+        Route::get('/paiements/create', [PaiementController::class, 'create'])->name('paiements.create');
+        Route::post('/paiements', [PaiementController::class, 'store'])->name('paiements.store');
+    });
+
+    Route::middleware('role:admin,gestionnaire,proprietaire,locataire,comptable')->group(function() {
+        Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements.index');
+        Route::get('/paiements/{paiement}', [PaiementController::class, 'show'])->name('paiements.show');
+        Route::get('/quittances', [QuittanceController::class, 'index'])->name('quittances.index');
+        Route::get('/quittances/{quittance}', [QuittanceController::class, 'show'])->name('quittances.show');
+    });
+
+    Route::middleware('role:admin,gestionnaire,comptable')->group(function() {
+        Route::patch('/paiements/{paiement}', [PaiementController::class, 'update'])->name('paiements.update');
+        Route::delete('/paiements/{paiement}', [PaiementController::class, 'destroy'])->name('paiements.destroy');
         Route::post('/paiements/{paiement}/relancer', [PaiementController::class, 'relancer'])->name('paiements.relancer');
         Route::get('/quittances/generate/{paiement}', [QuittanceController::class, 'generate'])->name('quittances.generate');
-        Route::resource('quittances', QuittanceController::class);
+        Route::resource('quittances', QuittanceController::class)->except(['index', 'show']);
         Route::resource('relances', RelanceController::class);
     });
 
@@ -143,13 +167,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // NOUVELLES FONCTIONNALITÉS ADMIN (STAFF & DÉPENSES)
     Route::middleware('role:admin')->group(function() {
         Route::resource('staff', \App\Http\Controllers\StaffController::class);
-        Route::resource('depenses', \App\Http\Controllers\DepenseController::class);
+    });
+
+    // RÉINITIALISATION MOT DE PASSE : Admin + Gestionnaire
+    Route::middleware('role:admin,gestionnaire')->group(function() {
         Route::post('/admin/users/{user}/reset-password', [AdminActionController::class, 'resetPassword'])->name('admin.users.reset-password');
+    });
+
+    Route::middleware('role:admin,gestionnaire,comptable')->group(function() {
+        Route::resource('depenses', \App\Http\Controllers\DepenseController::class);
     });
 
     Route::get('/reports/monthly', [DashboardController::class, 'exportMonthly'])
         ->name('reports.monthly')
-        ->middleware('role:admin,proprietaire,gestionnaire');
+        ->middleware('role:admin,proprietaire,gestionnaire,comptable');
+
+    Route::post('/reports/cloturer', [DashboardController::class, 'cloturer'])
+        ->name('reports.cloturer')
+        ->middleware('role:admin,gestionnaire,comptable');
+
+    // REVERSEMENTS
+    Route::get('/reversements', [\App\Http\Controllers\ReversementController::class, 'index'])
+        ->name('reversements.index')
+        ->middleware('role:admin,comptable,proprietaire');
+
+    Route::get('/reversements/{bilan}', [\App\Http\Controllers\ReversementController::class, 'show'])
+        ->name('reversements.show')
+        ->middleware('role:admin,comptable,proprietaire');
+
+    Route::post('/reversements/{bilan}/payer', [\App\Http\Controllers\ReversementController::class, 'markAsPaid'])
+        ->name('reversements.markAsPaid')
+        ->middleware('role:admin,comptable');
 
     // PROFILE
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -162,26 +210,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/recherche/{unite}/postuler', [\App\Http\Controllers\RechercheController::class, 'postuler'])->name('recherche.postuler');
 
     // EXPORTS EXCEL (CSV)
-    Route::middleware('role:admin,gestionnaire,proprietaire')->group(function() {
+    Route::middleware('role:admin,gestionnaire,proprietaire,comptable')->group(function() {
         Route::get('/export/locataires', [\App\Http\Controllers\ExportController::class, 'exportLocataires'])->name('export.locataires');
         Route::get('/export/biens', [\App\Http\Controllers\ExportController::class, 'exportBiens'])->name('export.biens');
-    });
-
-    Route::middleware('role:admin,gestionnaire')->group(function() {
-        Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
-        Route::get('/export/contrats', [\App\Http\Controllers\ExportController::class, 'exportContrats'])->name('export.contrats');
         Route::get('/export/paiements', [\App\Http\Controllers\ExportController::class, 'exportPaiements'])->name('export.paiements');
     });
 
-    // GESTION DES DEMANDES DE LOCATION (Admin/Gestionnaire)
-    Route::middleware('role:admin,gestionnaire')->group(function() {
+    Route::middleware('role:admin,gestionnaire,comptable')->group(function() {
+        Route::get('/export/proprietaires', [\App\Http\Controllers\ExportController::class, 'exportProprietaires'])->name('export.proprietaires');
+        Route::get('/export/contrats', [\App\Http\Controllers\ExportController::class, 'exportContrats'])->name('export.contrats');
+    });
+
+    // GESTION DES DEMANDES DE LOCATION
+    Route::middleware('role:admin,gestionnaire,locataire,proprietaire')->group(function() {
         Route::get('/demandes-location', [\App\Http\Controllers\DemandeLocationController::class, 'index'])->name('demandes-location.index');
+    });
+
+    Route::middleware('role:admin,gestionnaire')->group(function() {
         Route::post('/demandes-location/{demande}/valider-admin', [\App\Http\Controllers\DemandeLocationController::class, 'validerAdmin'])->name('demandes-location.valider-admin');
         Route::post('/demandes-location/{demande}/rejeter', [\App\Http\Controllers\DemandeLocationController::class, 'rejeter'])->name('demandes-location.rejeter');
     });
     
     // Le propriétaire peut juste donner un avis (optionnel dans un vrai système mais on garde une trace)
     Route::post('/demandes-location/{demande}/valider-proprietaire', [\App\Http\Controllers\DemandeLocationController::class, 'validerProprietaire'])->name('demandes-location.valider-proprietaire')->middleware('role:proprietaire');
+});
+
+Route::post('/notifications/read-all', function () {
+    auth()->user()->unreadNotifications->markAsRead();
+    return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
+})->name('notifications.readAll')->middleware('auth');
+
+// ASSISTANCE IA : COMPLETION OU SUPPRESSION DE PROFIL
+Route::middleware('auth')->group(function () {
+    Route::post('/profile/complete', [\App\Http\Controllers\ProfileController::class, 'complete'])->name('profile.complete');
+    Route::post('/profile/abort', [\App\Http\Controllers\ProfileController::class, 'abort'])->name('profile.abort');
 });
 
 require __DIR__.'/auth.php';

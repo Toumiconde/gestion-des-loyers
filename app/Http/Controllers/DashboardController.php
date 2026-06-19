@@ -20,9 +20,12 @@ class DashboardController extends Controller
         if ($request->has('year')) {
             session(['selected_year' => $request->get('year')]);
         }
+        if ($request->has('month')) {
+            session(['selected_month' => $request->get('month')]);
+        }
         
         $selectedYear = session('selected_year', date('Y'));
-        $selectedMonth = $request->get('month');
+        $selectedMonth = session('selected_month');
 
         // Liste des années pour le filtre
         $years = range(2024, 2030);
@@ -36,7 +39,8 @@ class DashboardController extends Controller
 
         // Si le locataire n'a pas encore de logement, on le redirige vers la recherche
         if ($user->role === 'locataire' && (!$user->locataire || !$user->locataire->contrats()->where('statut', 'actif')->exists())) {
-            // Vérifier s'il a déjà des demandes en cours pour ne pas boucler s'il veut juste voir son statut
+            $locataireId = $user->locataire->id ?? 0;
+            // Vérifier s'il a déjà des demandes en cours
             $hasPendingRequests = \App\Models\DemandeLocation::where('user_id', $user->id)
                 ->whereIn('statut', ['en_attente', 'valide_proprietaire', 'valide_admin', 'accepte'])
                 ->exists();
@@ -52,20 +56,15 @@ class DashboardController extends Controller
         // --- FILTRAGE TEMPOREL ET PAR RÔLE ---
         $endOfYear = Carbon::create($selectedYear, 12, 31)->endOfDay();
         
-        $queryPaiements = Paiement::withTrashed()->where('paiements.created_at', '<=', $endOfYear)
-            ->where(function($q) use ($endOfYear) { $q->whereNull('paiements.deleted_at')->orWhere('paiements.deleted_at', '>', $endOfYear); });
+        $queryPaiements = Paiement::withTrashed()->whereYear('paiements.mois_concerne', $selectedYear);
             
-        $queryIncidents = Incident::withTrashed()->where('incidents.created_at', '<=', $endOfYear)
-            ->where(function($q) use ($endOfYear) { $q->whereNull('incidents.deleted_at')->orWhere('incidents.deleted_at', '>', $endOfYear); });
+        $queryIncidents = Incident::withTrashed()->whereYear('incidents.created_at', $selectedYear);
             
-        $queryBiens = Bien::withTrashed()->where('biens.created_at', '<=', $endOfYear)
-            ->where(function($q) use ($endOfYear) { $q->whereNull('biens.deleted_at')->orWhere('biens.deleted_at', '>', $endOfYear); });
+        $queryBiens = Bien::withTrashed()->whereYear('biens.created_at', $selectedYear);
             
-        $queryLocataires = Locataire::withTrashed()->where('locataires.created_at', '<=', $endOfYear)
-            ->where(function($q) use ($endOfYear) { $q->whereNull('locataires.deleted_at')->orWhere('locataires.deleted_at', '>', $endOfYear); });
+        $queryLocataires = Locataire::withTrashed()->whereYear('locataires.created_at', $selectedYear);
             
-        $queryContrats = Contrat::withTrashed()->where('contrats.created_at', '<=', $endOfYear)
-            ->where(function($q) use ($endOfYear) { $q->whereNull('contrats.deleted_at')->orWhere('contrats.deleted_at', '>', $endOfYear); });
+        $queryContrats = Contrat::withTrashed()->whereYear('contrats.created_at', $selectedYear);
 
         if ($user->role === 'locataire') {
             $locataireId = $user->locataire->id ?? 0;
@@ -83,23 +82,48 @@ class DashboardController extends Controller
             $queryContrats->whereHas('bien', fn($q) => $q->where('proprietaire_id', $proprietaireId));
         }
 
-        // --- DONNÉES DU GRAPHIQUE COMPARATIF (COURBE) ---
+        // --- DONNÉES DU GRAPHIQUE DYNAMIQUE (ANNUEL OU MENSUEL) ---
         $dataCurrentYear = [];
         $dataPastYear = [];
+        $labelsGraphe = [];
         $pastYear = $selectedYear - 1;
 
-        for ($m = 1; $m <= 12; $m++) {
-            // Année en cours
-            $dataCurrentYear[] = (clone $queryPaiements)->whereYear('mois_concerne', $selectedYear)
-                                ->whereMonth('mois_concerne', $m)
-                                ->where('statut', 'paye')
-                                ->sum('montant');
-            
-            // Année précédente
-            $dataPastYear[] = (clone $queryPaiements)->whereYear('mois_concerne', $pastYear)
-                                ->whereMonth('mois_concerne', $m)
-                                ->where('statut', 'paye')
-                                ->sum('montant');
+        if ($selectedMonth) {
+            // VUE MENSUELLE (JOUR PAR JOUR)
+            $daysInMonth = Carbon::create($selectedYear, $selectedMonth)->daysInMonth;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $labelsGraphe[] = "Jour " . $d;
+                
+                // Année en cours
+                $dataCurrentYear[] = (clone $queryPaiements)
+                                    ->whereYear('mois_concerne', $selectedYear)
+                                    ->whereMonth('mois_concerne', $selectedMonth)
+                                    ->whereDay('date_paiement', $d)
+                                    ->where('statut', 'paye')
+                                    ->sum('montant');
+                
+                // Année précédente (pour comparaison si besoin, sinon 0)
+                $dataPastYear[] = (clone $queryPaiements)
+                                    ->whereYear('mois_concerne', $pastYear)
+                                    ->whereMonth('mois_concerne', $selectedMonth)
+                                    ->whereDay('date_paiement', $d)
+                                    ->where('statut', 'paye')
+                                    ->sum('montant');
+            }
+        } else {
+            // VUE ANNUELLE (MOIS PAR MOIS)
+            $labelsGraphe = array_values($months);
+            for ($m = 1; $m <= 12; $m++) {
+                $dataCurrentYear[] = (clone $queryPaiements)->whereYear('mois_concerne', $selectedYear)
+                                    ->whereMonth('mois_concerne', $m)
+                                    ->where('statut', 'paye')
+                                    ->sum('montant');
+                
+                $dataPastYear[] = (clone $queryPaiements)->whereYear('mois_concerne', $pastYear)
+                                    ->whereMonth('mois_concerne', $m)
+                                    ->where('statut', 'paye')
+                                    ->sum('montant');
+            }
         }
 
         // --- DONNÉES DU GRAPHIQUE CIRCULAIRE ---
@@ -111,7 +135,7 @@ class DashboardController extends Controller
         $statutCounts = $bienStats->pluck('count')->toArray();
 
         // --- STATISTIQUES FINANCIÈRES FILTRÉES PAR PÉRIODE ---
-        $queryPaiementsPeriode = (clone $queryPaiements)->whereYear('paiements.mois_concerne', $selectedYear);
+        $queryPaiementsPeriode = (clone $queryPaiements);
         if ($selectedMonth) {
             $queryPaiementsPeriode->whereMonth('paiements.mois_concerne', $selectedMonth);
         }
@@ -141,7 +165,7 @@ class DashboardController extends Controller
         $isCurrentMonth = ($selectedMonth == date('n'));
         $showFlash = $isCurrentYear && (!$selectedMonth || $isCurrentMonth);
         
-        if ($user->role === 'admin' && $showFlash) {
+        if (in_array($user->role, ['admin', 'comptable', 'gestionnaire']) && $showFlash) {
             $last24h = Carbon::now()->subHours(24);
             $dailySummary = [
                 'connexions' => ActivityLog::where('action', 'connexion')->where('created_at', '>=', $last24h)->count(),
@@ -167,11 +191,14 @@ class DashboardController extends Controller
                                 ->take(10)
                                 ->get();
 
-        // Compteur de tickets support (pour tout le monde)
-        $supportTicketsCount = \App\Models\Message::where('is_support', true)
-            ->where('is_read', false)
-            ->where('receiver_id', $user->id)
-            ->count();
+        // Compteur de tickets support (pour tout le monde sauf comptable)
+        $supportTicketsCount = 0;
+        if (auth()->user()->role !== 'comptable') {
+            $supportTicketsCount = \App\Models\Message::where('is_support', true)
+                ->where('is_read', false)
+                ->where('receiver_id', $user->id)
+                ->count();
+        }
 
         $totalRevenus = (clone $queryPaiementsPeriode)->sum('montant');
         
@@ -192,11 +219,26 @@ class DashboardController extends Controller
         }
         
         $beneficeNet = $totalRevenus - $totalDepenses;
+        if ($user->role === 'proprietaire' && $user->proprietaire) {
+            $commission = ($totalRevenus * ($user->proprietaire->commission_rate ?? 10)) / 100;
+            $beneficeNet -= $commission;
+        }
 
-        // CALCULS COMPLÉMENTAIRES POUR LES COMPTEURS
+        // --- CALCULS COMPTABLES SPÉCIFIQUES ---
+        // Détails des commissions agence (Somme des frais de gestion des bilans)
+        $totalCommissions = \App\Models\Bilan::whereYear('annee', $selectedYear)
+            ->when($selectedMonth, fn($q) => $q->where('mois', $selectedMonth))
+            ->sum('frais_gestion');
+
+        // Liste détaillée des retards de paiement (Balance Âgée)
+        $detailsRetards = (clone $queryPaiementsPeriode)
+            ->where('statut', 'en_retard')
+            ->with('contrat.locataire', 'contrat.bien')
+            ->get();
+
         $totalLoyers = (clone $queryContratsPeriode)->sum('loyer');
         $totalCharges = (clone $queryContratsPeriode)->join('biens', 'contrats.bien_id', '=', 'biens.id')->sum('biens.charges');
-        $revenuNet = $totalRevenus - $totalDepenses; // Déjà calculé mais on peut affiner si besoin
+        $revenuNet = $totalRevenus - $totalDepenses; 
         
         $totalBiensPotentiels = (clone $queryBiens)->count();
         $tauxOccupation = $totalBiensPotentiels > 0 
@@ -217,10 +259,10 @@ class DashboardController extends Controller
             'taux_occupation' => $tauxOccupation,
             'activity_logs'   => $activityLogs,
             'locataires_liste' => (clone $queryLocataires)->with('contratActif.bien')->latest()->take(5)->get(),
-            'recent_proprietaires' => ($user->role === 'admin' || $user->role === 'gestionnaire') 
+            'recent_proprietaires' => in_array($user->role, ['admin', 'gestionnaire', 'comptable']) 
                                         ? \App\Models\Proprietaire::with('user')->latest()->take(5)->get()
                                         : collect(),
-            'bilans_officiels' => ($user->role === 'proprietaire') 
+            'bilans_officiels' => ($user->role === 'proprietaire' && $user->proprietaire) 
                                     ? \App\Models\Bilan::where('proprietaire_id', $user->proprietaire->id)
                                         ->where('annee', $selectedYear)
                                         ->get()
@@ -232,7 +274,7 @@ class DashboardController extends Controller
                                              ->take(10)
                                              ->get(),
 
-            'labels_mois'    => array_values($months),
+            'labels_mois'    => $labelsGraphe,
             'data_paiements' => $dataCurrentYear,
             'data_past_year' => $dataPastYear,
             'statut_labels'  => $statutLabels,
@@ -245,6 +287,7 @@ class DashboardController extends Controller
                 'paiements_count'   => (clone $queryPaiementsPeriode)->count(),
                 'incidents_ouverts' => (clone $queryIncidentsPeriode)->count(),
                 'loyers_en_retard'  => (clone $queryPaiementsPeriode)->where('statut', 'en_retard')->count(),
+                'commission_net'    => $totalCommissions,
             ],
             'global' => [
                 'total_biens'      => (clone $queryBiens)->count(),
@@ -252,17 +295,28 @@ class DashboardController extends Controller
                 'total_contrats'   => (clone $queryContratsPeriode)->count(),
             ],
             'support_tickets_count' => $supportTicketsCount,
-            'recent_support_requests' => \App\Models\Message::where('is_support', true)
-                ->where(function($q) use ($user) {
-                    if ($user->role === 'admin') return; // Admin voit tout
-                    $q->where('sender_id', $user->id)
-                      ->orWhere('receiver_id', $user->id);
-                })
-                ->with('sender', 'receiver')
-                ->latest()
-                ->take(5)
-                ->get(),
+            'recent_support_requests' => (auth()->user()->role === 'comptable') 
+                ? collect()
+                : \App\Models\Message::where('is_support', true)
+                    ->where(function($q) use ($user) {
+                        if (in_array($user->role, ['admin', 'gestionnaire'])) return; // Le staff voit tout
+                        $q->where('sender_id', $user->id)
+                          ->orWhere('receiver_id', $user->id);
+                    })
+                    ->with('sender', 'receiver')
+                    ->latest()
+                    ->take(5)
+                    ->get(),
             'profile_updates' => $activityLogs->where('action', 'profile_updated')->take(5),
+            'details_retards' => $detailsRetards,
+            'recent_transactions' => Paiement::with('contrat.locataire')->latest()->take(5)->get(),
+            'recent_expenses' => \App\Models\Depense::latest()->take(5)->get(),
+            'bilans_a_payer'  => in_array($user->role, ['admin', 'comptable'])
+                                    ? \App\Models\Bilan::where('statut', 'cloture')
+                                        ->with('proprietaire.user')
+                                        ->latest()
+                                        ->get()
+                                    : collect(),
         ];
 
         // LOGIQUE SPÉCIFIQUE LOCATAIRE
@@ -296,7 +350,7 @@ class DashboardController extends Controller
             ->whereMonth('mois_concerne', $monthNum)
             ->with('contrat.locataire', 'contrat.bien');
 
-        if ($user->role === 'proprietaire') {
+        if ($user->role === 'proprietaire' && $user->proprietaire) {
             $proprietaireId = $user->proprietaire->id;
             $revenusQuery->whereHas('contrat.bien', fn($q) => $q->where('proprietaire_id', $proprietaireId));
             
@@ -320,7 +374,73 @@ class DashboardController extends Controller
         }
             
         $revenus = $revenusQuery->get();
+        
+        // Calcul commission si propriétaire
+        $fraisGestion = 0;
+        if ($user->role === 'proprietaire' && $user->proprietaire) {
+            $bilan = \App\Models\Bilan::where('proprietaire_id', $user->proprietaire->id)
+                ->where('annee', $selectedYear)
+                ->where('mois', $monthNum)
+                ->first();
+            
+            if ($bilan) {
+                $fraisGestion = $bilan->frais_gestion;
+            } else {
+                $fraisGestion = ($revenus->sum('montant') * ($user->proprietaire->commission_rate ?? 10)) / 100;
+            }
+        }
 
-        return view('reports.monthly', compact('revenus', 'depenses', 'selectedYear', 'monthNum'));
+        return view('reports.monthly', compact('revenus', 'depenses', 'selectedYear', 'monthNum', 'fraisGestion'));
+    }
+
+    public function cloturer(Request $request)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire() && !auth()->user()->isComptable()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'proprietaire_id' => 'required|exists:proprietaires,id',
+            'year'            => 'required|integer',
+            'month'           => 'required|integer',
+        ]);
+
+        $prop = \App\Models\Proprietaire::findOrFail($request->proprietaire_id);
+        $year = $request->year;
+        $month = $request->month;
+
+        // Calcul des montants
+        $revenus = \App\Models\Paiement::whereYear('mois_concerne', $year)
+            ->whereMonth('mois_concerne', $month)
+            ->whereHas('contrat.bien', fn($q) => $q->where('proprietaire_id', $prop->id))
+            ->where('statut', 'paye')
+            ->sum('montant');
+
+        $depenses = \App\Models\Incident::whereHas('contrat.bien', fn($q) => $q->where('proprietaire_id', $prop->id))
+            ->where('statut', 'paye')
+            ->whereYear('updated_at', $year)
+            ->whereMonth('updated_at', $month)
+            ->sum('cout_reel');
+
+        $commissionRate = $prop->commission_rate ?? 10;
+        $fraisGestion = ($revenus * $commissionRate) / 100;
+        $net = $revenus - $depenses - $fraisGestion;
+
+        \App\Models\Bilan::updateOrCreate(
+            [
+                'proprietaire_id' => $prop->id,
+                'annee'           => $year,
+                'mois'            => $month,
+            ],
+            [
+                'total_revenus'  => $revenus,
+                'total_depenses' => $depenses,
+                'frais_gestion'  => $fraisGestion,
+                'montant_net'    => $net,
+                'statut'         => 'cloture',
+            ]
+        );
+
+        return back()->with('success', "Le mois de " . $month . "/" . $year . " a été clôturé pour " . $prop->user->name);
     }
 }

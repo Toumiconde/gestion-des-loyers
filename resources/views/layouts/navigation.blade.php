@@ -18,6 +18,57 @@
                 </div>
             </div>
 
+            <!-- Notifications Dropdown (Admin/Gestionnaire) -->
+            @if(in_array(Auth::user()->role, ['admin', 'gestionnaire']))
+                <div class="hidden sm:flex sm:items-center sm:ms-3">
+                    <x-dropdown align="right" width="64">
+                        <x-slot name="trigger">
+                            <button class="relative inline-flex items-center p-2 text-gray-500 hover:text-blue-600 focus:outline-none transition duration-150 ease-in-out">
+                                <i class="fa-solid fa-bell text-lg"></i>
+                                @if(Auth::user()->unreadNotifications->count() > 0)
+                                    <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                                        {{ Auth::user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="px-4 py-2 border-b border-gray-100 bg-gray-50 text-xs font-bold text-gray-600 uppercase tracking-widest">
+                                Notifications
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                @forelse(Auth::user()->unreadNotifications->take(5) as $notification)
+                                    <div class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <p class="text-xs text-gray-800 font-semibold mb-1">
+                                            {{ $notification->data['message'] }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-400">
+                                            {{ \Carbon\Carbon::parse($notification->created_at)->diffForHumans() }}
+                                        </p>
+                                    </div>
+                                @empty
+                                    <div class="px-4 py-6 text-center text-gray-400">
+                                        <i class="fa-solid fa-circle-check text-2xl mb-2 opacity-20"></i>
+                                        <p class="text-xs">Aucune nouvelle notification</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                            @if(Auth::user()->unreadNotifications->count() > 0)
+                                <div class="px-4 py-2 border-t border-gray-100 text-center">
+                                    <form action="{{ route('notifications.readAll') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider">
+                                            Tout marquer comme lu
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
+                        </x-slot>
+                    </x-dropdown>
+                </div>
+            @endif
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">

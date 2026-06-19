@@ -159,7 +159,7 @@
             </a>
             @endif
 
-            @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+            @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
             <a href="{{ route('proprietaires.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('proprietaires.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-user-tie text-base {{ request()->routeIs('proprietaires.*') ? 'text-white' : 'text-slate-400' }}"></i>
@@ -167,7 +167,7 @@
             </a>
             @endif
 
-            @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'proprietaire']))
+            @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'gestionnaire', 'proprietaire', 'comptable']))
             <a href="{{ route('biens.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('biens.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-building text-base {{ request()->routeIs('biens.*') ? 'text-white' : 'text-slate-400' }}"></i>
@@ -181,7 +181,7 @@
             </a>
             @endif
 
-            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
             <a href="{{ route('contrats.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('contrats.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-file-signature text-base {{ request()->routeIs('contrats.*') ? 'text-white' : 'text-slate-400' }}"></i>
@@ -190,44 +190,83 @@
             @endif
 
             {{-- Demandes de location (Admin/Gestionnaire ou Locataire pour ses propres demandes) --}}
-            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'locataire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'locataire', 'proprietaire']))
+            @php
+                $demandesUnread = 0;
+                if(in_array(auth()->user()->role, ['admin', 'gestionnaire'])) {
+                    $demandesUnread = \App\Models\DemandeLocation::where('is_new', true)->count();
+                } elseif(auth()->user()->role === 'proprietaire') {
+                    $demandesUnread = \App\Models\DemandeLocation::where('is_new', true)
+                        ->whereHas('uniteLocative.bien', function($q) {
+                            $q->where('proprietaire_id', auth()->user()->proprietaire->id);
+                        })->count();
+                }
+            @endphp
             <a href="{{ route('demandes-location.index') }}"
                class="flex items-center justify-between px-5 py-3 mt-2 rounded-2xl transition-all duration-300 {{ request()->routeIs('demandes-location.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 relative">
                     <i class="fa-solid fa-paper-plane text-base {{ request()->routeIs('demandes-location.*') ? 'text-white' : 'text-slate-400' }}"></i>
+                    @if($demandesUnread > 0)
+                        <span class="absolute -top-1 -left-1 w-2.5 h-2.5 bg-rose-500 border-2 border-[#02132D] rounded-full"></span>
+                    @endif
                     <span class="text-sm {{ request()->routeIs('demandes-location.*') ? 'text-white font-semibold' : 'text-slate-300' }}">
                         @if(auth()->user()->role === 'locataire') Mes Demandes @else Demandes de location @endif
                     </span>
                 </div>
+                @if($demandesUnread > 0)
+                    <span class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ $demandesUnread }}</span>
+                @endif
             </a>
             @endif
 
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'proprietaire', 'comptable', 'locataire']))
             {{-- ===== FINANCE ===== --}}
             <div class="mt-6 mb-2 px-2">
                 <p class="text-xs font-semibold uppercase tracking-widest text-slate-400">
                     ── Finance
                 </p>
             </div>
+            @endif
 
-            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'proprietaire', 'comptable', 'locataire']))
             <a href="{{ route('paiements.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('paiements.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-money-bill-wave text-base {{ request()->routeIs('paiements.*') ? 'text-white' : 'text-slate-400' }}"></i>
-                <span class="text-sm {{ request()->routeIs('paiements.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Paiements</span>
+                <span class="text-sm {{ request()->routeIs('paiements.*') ? 'text-white font-semibold' : 'text-slate-300' }}">
+                    @if(auth()->user()->role === 'locataire') Mes Paiements @else Paiements @endif
+                </span>
             </a>
 
             <a href="{{ route('quittances.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('quittances.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-receipt text-base {{ request()->routeIs('quittances.*') ? 'text-white' : 'text-slate-400' }}"></i>
-                <span class="text-sm {{ request()->routeIs('quittances.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Quittances</span>
+                <span class="text-sm {{ request()->routeIs('quittances.*') ? 'text-white font-semibold' : 'text-slate-300' }}">
+                    @if(auth()->user()->role === 'locataire') Reçus de mes paiements @else Quittances @endif
+                </span>
+            </a>
+
+            @if(in_array(auth()->user()->role, ['admin', 'comptable', 'proprietaire']))
+            <a href="{{ route('reversements.index') }}"
+               class="flex items-center gap-4 px-5 py-4 mt-1 rounded-2xl transition-all duration-300 {{ request()->routeIs('reversements.*') ? 'bg-emerald-600 shadow-lg' : 'hover:bg-white/10' }}">
+                <i class="fa-solid fa-hand-holding-dollar text-lg {{ request()->routeIs('reversements.*') ? 'text-white' : 'text-slate-400' }}"></i>
+                <span class="text-sm {{ request()->routeIs('reversements.*') ? 'text-white font-semibold' : 'text-slate-300' }}">
+                    @if(auth()->user()->role === 'proprietaire') Mes Reversements @else Reversements Proprio @endif
+                </span>
             </a>
             @endif
+            @endif
 
-            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
             <a href="{{ route('relances.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('relances.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
                 <i class="fa-solid fa-bell text-base {{ request()->routeIs('relances.*') ? 'text-white' : 'text-slate-400' }}"></i>
                 <span class="text-sm {{ request()->routeIs('relances.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Relances</span>
+            </a>
+
+            <a href="{{ route('depenses.index') }}"
+               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('depenses.*') ? 'bg-rose-600 shadow-lg' : 'hover:bg-white/10' }}">
+                <i class="fa-solid fa-wallet text-base {{ request()->routeIs('depenses.*') ? 'text-white' : 'text-slate-400' }}"></i>
+                <span class="text-sm {{ request()->routeIs('depenses.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Charges & Dépenses</span>
             </a>
             @endif
 
@@ -255,6 +294,7 @@
                 </p>
             </div>
 
+            @if(auth()->user()->role !== 'comptable')
             @php
                 $newIncidentsCount = (auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
                     ? \App\Models\Incident::where('is_new', true)->count()
@@ -275,6 +315,7 @@
                     <span class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ $newIncidentsCount }}</span>
                 @endif
             </a>
+            @endif
 
             <a href="{{ route('documents.index') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('documents.*') ? 'bg-blue-700 shadow-lg' : 'hover:bg-white/10' }}">
@@ -308,11 +349,6 @@
                 <span class="text-sm {{ request()->routeIs('staff.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Collaborateurs</span>
             </a>
 
-            <a href="{{ route('depenses.index') }}"
-               class="flex items-center gap-4 px-5 py-3 rounded-2xl transition-all duration-300 {{ request()->routeIs('depenses.*') ? 'bg-rose-600 shadow-lg' : 'hover:bg-white/10' }}">
-                <i class="fa-solid fa-wallet text-base {{ request()->routeIs('depenses.*') ? 'text-white' : 'text-slate-400' }}"></i>
-                <span class="text-sm {{ request()->routeIs('depenses.*') ? 'text-white font-semibold' : 'text-slate-300' }}">Charges & Dépenses</span>
-            </a>
 @endif
 
         </div>
@@ -459,19 +495,7 @@
 
         {{-- PAGE CONTENT --}}
         <div class="flex-1 overflow-y-auto px-8 pb-8">
-            @if(session('success'))
-                <div class="mb-6 p-4 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200 flex items-center gap-3">
-                    <i class="fa-solid fa-check-circle"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="mb-6 p-4 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 flex items-center gap-3">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    {{ session('error') }}
-                </div>
-            @endif
+            @include('partials.alerts')
 
             @yield('content')
         </div>
@@ -479,6 +503,158 @@
     </main>
 
 </div>
+    {{-- ================================================================= --}}
+    {{-- ASSISTANCE IA GLOBALE : ONBOARDING & COMPLÉTION                 --}}
+    {{-- ================================================================= --}}
+    @auth
+        @php
+            $user = auth()->user();
+            $missingInfo = false;
+            if($user->role === 'proprietaire') {
+                $p = $user->proprietaire;
+                $missingInfo = (!$p || empty($p->telephone) || empty($p->adresse));
+            } elseif($user->role === 'locataire') {
+                $l = $user->locataire;
+                $missingInfo = (!$l || empty($l->telephone) || empty($l->adresse));
+            }
+        @endphp
+
+        @if($missingInfo)
+        <div x-data="{ 
+                show: false, 
+                init() {
+                    setTimeout(() => {
+                        this.show = true;
+                    }, 10000); // 10 secondes pour laisser l'utilisateur découvrir la page
+                }
+            }" 
+            x-show="show"
+            x-cloak
+            x-transition:enter="transition ease-out duration-700"
+            x-transition:enter-start="opacity-0 scale-90 blur-lg"
+            x-transition:enter-end="opacity-100 scale-100 blur-0"
+            class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
+            
+            <div class="bg-white rounded-[50px] shadow-2xl border border-white w-full max-w-2xl overflow-hidden animate-fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-5 h-full">
+                    <!-- Sidebar IA -->
+                    <div class="md:col-span-2 bg-slate-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-full opacity-10">
+                            <i class="fa-solid fa-robot text-[150px] -ml-10 -mt-10"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
+                                <i class="fa-solid fa-robot text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-black mb-4">Finalisation <br><span class="text-blue-400">du Profil</span></h3>
+                            <p class="text-[11px] text-slate-400 leading-relaxed font-medium">
+                                Bonjour {{ explode(' ', $user->name)[0] }}, je suis votre assistant. Votre inscription est presque terminée. Pour activer toutes les fonctionnalités de GESTLOYER, j'ai besoin de vos informations complètes.
+                            </p>
+                        </div>
+                        <div class="relative z-10 pt-10">
+                            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Sécurité</p>
+                                <p class="text-[9px] text-slate-400 leading-tight">Vos données sont protégées par le protocole AES-256 et ne sont jamais partagées.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire Total -->
+                    <div class="md:col-span-3 p-10 bg-white overflow-y-auto max-h-[85vh]">
+                        <form action="{{ route('profile.complete') }}" method="POST" class="space-y-6">
+                            @csrf
+                            <div class="space-y-4">
+                                <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Informations Personnelles</h4>
+                                
+                                <div class="grid grid-cols-1 gap-4" x-data="{ 
+                                    countryCode: '',
+                                    updateCode(e) {
+                                        this.countryCode = e.target.value;
+                                    }
+                                }">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Numéro de Téléphone</label>
+                                        <div class="flex gap-2">
+                                            <select @change="updateCode($event)" class="w-32 h-12 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer">
+                                                <option value="">Pays</option>
+                                                <option value="+224">🇬🇳 Guinée (+224)</option>
+                                                <option value="+221">🇸🇳 Sénégal (+221)</option>
+                                                <option value="+223">🇲🇱 Mali (+223)</option>
+                                                <option value="+225">🇨🇮 Côte d'I. (+225)</option>
+                                                <option value="+33">🇫🇷 France (+33)</option>
+                                            </select>
+                                            <div class="relative flex-1">
+                                                <i class="fa-solid fa-phone absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                                                <input type="text" name="telephone" required x-model="countryCode" placeholder="6XX XX XX XX" 
+                                                    class="w-full h-12 pl-12 pr-6 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Adresse Complète</label>
+                                        <input type="text" name="adresse" required placeholder="Quartier, Commune, Ville" 
+                                            class="w-full h-12 px-5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                                    </div>
+
+                                    @if($user->role === 'proprietaire')
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">RIB Bancaire (Facultatif)</label>
+                                        <div class="relative">
+                                            <i class="fa-solid fa-building-columns absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                                            <input type="text" name="rib_bancaire" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX" 
+                                                class="w-full h-12 pl-12 pr-6 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 pt-4" x-data="{ openTerms: false }">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Engagement & CGU</h4>
+                                    <button type="button" @click="openTerms = !openTerms" class="text-[10px] font-black text-blue-600 flex items-center gap-2 hover:bg-blue-50 px-3 py-1 rounded-full transition-all">
+                                        Lire les conditions
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300" :class="openTerms ? 'rotate-180' : ''"></i>
+                                    </button>
+                                </div>
+
+                                <div x-show="openTerms" x-collapse class="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-[10px] text-slate-500 leading-relaxed max-h-40 overflow-y-auto font-medium">
+                                    <p class="font-bold text-slate-700 mb-2 underline">Conditions Générales d'Utilisation (CGU)</p>
+                                    <p>1. Exactitude des données : L'utilisateur s'engage à fournir des informations véridiques.</p>
+                                    <p class="mt-2">2. Confidentialité : GESTLOYER protège vos données personnelles.</p>
+                                    <p class="mt-2">3. Responsabilité : L'agence se réserve le droit de suspendre tout compte frauduleux.</p>
+                                    <p class="mt-2">4. Suppression : Le refus des conditions entraîne la suppression définitive du compte.</p>
+                                </div>
+
+                                <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <input type="checkbox" required class="mt-1 rounded text-blue-600 focus:ring-blue-500">
+                                    <p class="text-[10px] text-blue-800 leading-tight font-medium">
+                                        Je certifie l'exactitude de ces informations et j'accepte les CGU.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-3 pt-6">
+                                <button type="submit" class="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all">
+                                    Valider mon inscription
+                                </button>
+                                <button type="button" @click="if(confirm('🚨 ATTENTION : En quittant, votre compte sera immédiatement supprimé. Continuer ?')) { document.getElementById('abort-form').submit(); }" 
+                                    class="w-full h-14 bg-white border-2 border-slate-100 text-slate-400 hover:text-rose-600 hover:border-rose-100 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all">
+                                    Quitter et supprimer mon compte
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="abort-form" action="{{ route('profile.abort') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        @endif
+    @endauth
+
     @stack('scripts')
 </body>
 </html>

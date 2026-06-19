@@ -20,6 +20,7 @@ class Bien extends Model
         'statut',
         'nombre_chambres',
         'type_douche',
+        'details_etage',
     ];
 
     // Un bien appartient à un propriétaire

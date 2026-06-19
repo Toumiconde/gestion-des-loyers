@@ -19,11 +19,13 @@
         </a>
         @endif
 
+        @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
         <a href="{{ route('proprietaires.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-plus mr-2 group-hover:rotate-90 transition-transform"></i>
             Nouveau propriétaire
         </a>
+        @endif
     </div>
 </div>
 
@@ -83,7 +85,7 @@
                                class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Voir détails">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
-                            @if(!$p->trashed() && $p->user)
+                            @if(!$p->trashed() && $p->user && (auth()->user()->isAdmin() || auth()->user()->isGestionnaire()))
                             <form action="{{ route('admin.users.reset-password', $p->user) }}" method="POST" onsubmit="return confirm('Réinitialiser le mot de passe de {{ $p->user->name }} ?')" class="inline">
                                 @csrf
                                 <button type="submit" class="w-10 h-10 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Reset Pass">
@@ -91,7 +93,7 @@
                                 </button>
                             </form>
                             @endif
-                            @if(!$p->trashed())
+                            @if(!$p->trashed() && (auth()->user()->isAdmin() || auth()->user()->isGestionnaire()))
                             <a href="{{ route('proprietaires.edit', $p) }}" 
                                class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Modifier">
                                 <i class="fa-solid fa-pen-to-square text-sm"></i>

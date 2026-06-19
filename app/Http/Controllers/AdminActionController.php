@@ -17,9 +17,9 @@ class AdminActionController extends Controller
      */
     public function resetPassword(Request $request, User $user)
     {
-        // Sécurité : Seul l'admin peut réinitialiser le mot de passe.
-        if (!auth()->user()->isAdmin()) {
-            abort(403, "Action réservée à l'administrateur.");
+        // Sécurité : Admin ou Gestionnaire peuvent réinitialiser les mots de passe.
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403, "Action réservée à l'administrateur ou au gestionnaire.");
         }
 
         // Générer un mot de passe temporaire lisible et sécurisé

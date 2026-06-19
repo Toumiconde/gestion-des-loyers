@@ -32,7 +32,7 @@
         </nav>
         
         <div class="flex gap-3">
-            @if(auth()->user()->isAdmin() && $locataire->user)
+            @if((auth()->user()->isAdmin() || auth()->user()->isGestionnaire()) && $locataire->user)
             <form action="{{ route('admin.users.reset-password', $locataire->user) }}" method="POST"
                   onsubmit="return confirm('Réinitialiser le mot de passe de {{ $locataire->prenom }} {{ $locataire->nom }} ?')">
                 @csrf
@@ -42,7 +42,7 @@
                 </button>
             </form>
             @endif
-            @if(auth()->user()->role !== 'proprietaire')
+            @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
             <a href="{{ route('locataires.edit', $locataire) }}" 
                class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-600 hover:text-white transition-all flex items-center gap-2">
                 <i class="fa-solid fa-user-pen"></i> Modifier le profil
@@ -83,23 +83,48 @@
                 <p class="text-slate-400 font-medium mb-6">Inscrit le {{ $locataire->created_at->format('d/m/Y') }}</p>
                 
                 <div class="flex justify-center flex-wrap gap-2">
-                    <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-[10px] font-black uppercase tracking-widest">Locataire</span>
                     @if($locataire->contrats->where('statut', 'actif')->count() > 0)
-                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest">En place</span>
-                    @else
-                        <span class="px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">Inactif</span>
-                    @endif
-                    {{-- Statut du compte utilisateur --}}
-                    @if($locataire->user)
-                        <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                            <i class="fa-solid fa-circle-check text-[8px]"></i> Compte actif
+                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-user-check"></i> Ancien Locataire
                         </span>
                     @else
-                        <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                            <i class="fa-solid fa-circle-xmark text-[8px]"></i> Sans compte
+                        <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Nouveau Locataire
+                        </span>
+                    @endif
+                    
+                    @if($locataire->user)
+                        <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[8px]"></i> Compte actif
                         </span>
                     @endif
                 </div>
+
+                {{-- LIEN DE PAIEMENT RAPIDE --}}
+                <div class="mt-8 pt-8 border-t border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Lien de paiement rapide</p>
+                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                        <input type="text" id="paymentLink" readonly value="{{ url('/paiements/create') }}" 
+                               class="flex-1 bg-transparent border-none text-[10px] font-mono text-slate-500 focus:ring-0">
+                        <button onclick="copyPaymentLink()" class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                    <p id="copyStatus" class="text-[9px] text-emerald-600 font-bold mt-2 opacity-0 transition-opacity">Lien copié !</p>
+                </div>
+
+                <script>
+                    function copyPaymentLink() {
+                        const linkInput = document.getElementById('paymentLink');
+                        linkInput.select();
+                        linkInput.setSelectionRange(0, 99999);
+                        navigator.clipboard.writeText(linkInput.value);
+                        
+                        const status = document.getElementById('copyStatus');
+                        status.classList.remove('opacity-0');
+                        setTimeout(() => status.classList.add('opacity-0'), 2000);
+                    }
+                </script>
             </div>
 
             {{-- JAUGE DE FIABILITÉ --}}

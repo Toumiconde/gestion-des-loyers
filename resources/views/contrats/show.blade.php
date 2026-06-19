@@ -146,8 +146,8 @@
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="p-8 border-b border-slate-100 flex justify-between items-center">
                     <h3 class="text-xl font-black text-slate-800">Historique des Paiements</h3>
-                    @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
-                    @if($contrat->statut === 'actif')
+                    @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
+                    @if(in_array($contrat->statut, ['actif', 'brouillon']))
                     <a href="{{ route('paiements.create', ['contrat_id' => $contrat->id]) }}" class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-sm hover:bg-emerald-600 hover:text-white transition-all">
                         Encaisser un loyer
                     </a>
@@ -163,6 +163,7 @@
                                 <th class="px-8 py-4">Date Paiement</th>
                                 <th class="px-8 py-4 text-right">Montant</th>
                                 <th class="px-8 py-4 text-center">Statut</th>
+                                <th class="px-8 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
@@ -180,9 +181,16 @@
                                 </td>
                                 <td class="px-8 py-4 text-center">
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase 
-                                        {{ $p->statut === 'paye' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                        {{ $p->statut }}
+                                        {{ $p->statut === 'paye' ? 'bg-emerald-100 text-emerald-700' : ($p->statut === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">
+                                        {{ $p->statut === 'paye' ? 'payé' : ($p->statut === 'en_attente' ? 'en attente' : $p->statut) }}
                                     </span>
+                                </td>
+                                <td class="px-8 py-4 text-right">
+                                    <div class="flex justify-end">
+                                        <a href="{{ route('paiements.show', $p) }}" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm" title="Détails / Valider">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

@@ -12,19 +12,21 @@
     </div>
     
     <div class="flex gap-3">
-        @if(auth()->user()->isAdmin() || auth()->user()->isProprietaire() || auth()->user()->isGestionnaire())
-        <a href="{{ route('export.paiements') }}" 
+        @if(auth()->user()->isAdmin() || auth()->user()->isProprietaire() || auth()->user()->isGestionnaire() || auth()->user()->isComptable())
+        <a href="{{ route('export.paiements', ['year' => $selectedYear, 'month' => $selectedMonth]) }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-emerald-50 text-emerald-600 font-black rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 group border border-emerald-100 shadow-sm">
             <i class="fa-solid fa-file-excel mr-2 group-hover:bounce transition-transform"></i>
             Exporter Excel
         </a>
         @endif
 
+        @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']))
         <a href="{{ route('paiements.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-emerald-600 text-white font-black rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-hand-holding-dollar mr-2 group-hover:scale-110 transition-transform"></i>
             Encaisser un loyer
         </a>
+        @endif
     </div>
 </div>
 @else
@@ -69,6 +71,47 @@
         @endif
     </form>
 </div>
+
+{{-- BANDEAU PAIEMENTS EN ATTENTE (Admin/Comptable/Gestionnaire) --}}
+@if(isset($paiementsEnAttente) && $paiementsEnAttente->count() > 0)
+<div class="mb-8 bg-amber-50 border border-amber-200 rounded-3xl overflow-hidden">
+    <div class="px-8 py-5 border-b border-amber-200 flex items-center justify-between bg-amber-100/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center animate-pulse">
+                <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-amber-900 text-sm">{{ $paiementsEnAttente->count() }} paiement(s) en attente de validation</h3>
+                <p class="text-amber-700 text-[10px] font-bold uppercase tracking-widest">Action requise — vérifiez les preuves et validez</p>
+            </div>
+        </div>
+    </div>
+    <div class="divide-y divide-amber-100">
+        @foreach($paiementsEnAttente as $pa)
+        <div class="px-8 py-4 flex items-center justify-between hover:bg-amber-100/30 transition-colors">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-white border border-amber-200 flex items-center justify-center text-amber-600 font-black text-sm shadow-sm">
+                    {{ substr($pa->contrat->locataire->prenom ?? 'L', 0, 1) }}
+                </div>
+                <div>
+                    <p class="font-black text-slate-800">{{ $pa->contrat->locataire->prenom }} {{ $pa->contrat->locataire->nom }}</p>
+                    <p class="text-[10px] text-slate-400 font-bold">{{ $pa->contrat->bien->libelle }} — <span class="capitalize">{{ \Carbon\Carbon::parse($pa->mois_concerne)->locale('fr')->isoFormat('MMMM YYYY') }}</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="font-black text-slate-800">{{ number_format($pa->montant, 0, ',', ' ') }} GNF</p>
+                    <p class="text-[10px] text-slate-400 font-bold">Déclaré le {{ $pa->created_at->format('d/m/Y à H:i') }}</p>
+                </div>
+                <a href="{{ route('paiements.show', $pa) }}" class="px-4 py-2 bg-amber-500 text-white rounded-xl font-black text-xs hover:bg-amber-600 transition-all flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-eye"></i> Vérifier & Valider
+                </a>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
 
 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
     <div class="overflow-x-auto">
@@ -121,8 +164,8 @@
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
                             
-                            @if($p->statut === 'paye' && $p->quittance)
-                            <a href="{{ route('quittances.show', $p->quittance->id) }}" class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Télécharger la Quittance">
+                            @if($p->statut === 'paye')
+                            <a href="{{ route('quittances.generate', $p->id) }}" class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Télécharger la Quittance">
                                 <i class="fa-solid fa-file-pdf text-sm"></i>
                             </a>
                             @endif

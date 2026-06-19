@@ -7,12 +7,20 @@ use Illuminate\Http\Request;
 
 class DepenseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $depenses = Depense::orderBy('date_depense', 'desc')->paginate(15);
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
+
+        $query = Depense::whereYear('date_depense', $selectedYear);
+        if ($selectedMonth) {
+            $query->whereMonth('date_depense', $selectedMonth);
+        }
+
+        $depenses = (clone $query)->orderBy('date_depense', 'desc')->paginate(15);
         
-        $total = Depense::sum('montant');
-        $parCategorie = Depense::selectRaw('categorie, sum(montant) as total')
+        $total = (clone $query)->sum('montant');
+        $parCategorie = (clone $query)->selectRaw('categorie, sum(montant) as total')
             ->groupBy('categorie')
             ->get();
 

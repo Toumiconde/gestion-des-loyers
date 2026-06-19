@@ -79,7 +79,7 @@
                                     </form>
                                 @endif
 
-                                @if(Auth::user()->role === 'admin' && ($demande->statut === 'en_attente' || $demande->statut === 'valide_proprietaire'))
+                                @if(in_array(Auth::user()->role, ['admin', 'gestionnaire']) && ($demande->statut === 'en_attente' || $demande->statut === 'valide_proprietaire'))
                                     <form action="{{ route('demandes-location.valider-admin', $demande) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-white text-primary border-end" title="Validation Finale Admin">

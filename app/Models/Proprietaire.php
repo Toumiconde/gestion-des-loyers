@@ -11,6 +11,7 @@ class Proprietaire extends Model
     // Colonnes qu'on autorise à remplir en masse
     protected $fillable = [
         'user_id',
+        'commission_rate',
         'telephone',
         'adresse',
         'adresse_professionnelle',

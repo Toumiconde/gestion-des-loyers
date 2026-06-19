@@ -44,6 +44,53 @@
         <form method="POST" action="{{ route('paiements.store') }}" enctype="multipart/form-data" class="p-8">
             @csrf
 
+            @if ($errors->any())
+                <div class="mb-8 p-6 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-4">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-xl mt-1"></i>
+                    <div>
+                        <h4 class="font-black text-rose-800 uppercase tracking-widest text-xs mb-2">Erreurs de saisie</h4>
+                        <ul class="text-sm text-rose-600 font-medium list-disc list-inside space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
+            {{-- ALERTE PAIEMENT PARTIEL EXISTANT --}}
+            @if(isset($paiementPartielExistant) && $paiementPartielExistant)
+                @php
+                    $moisLabel = \Carbon\Carbon::parse($paiementPartielExistant->mois_concerne)->locale('fr')->isoFormat('MMMM YYYY');
+                @endphp
+                <div class="mb-8 p-6 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-400 text-white flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-black text-amber-900 text-sm mb-1">Paiement partiel détecté pour {{ $moisLabel }}</h4>
+                        <div class="grid grid-cols-3 gap-4 mt-3">
+                            <div class="bg-white rounded-xl p-3 border border-amber-200 text-center">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loyer dû</p>
+                                <p class="font-black text-slate-800 mt-1">{{ number_format($paiementPartielExistant->loyer_attendu, 0, ',', ' ') }} <span class="text-[10px]">GNF</span></p>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 border border-amber-200 text-center">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Déjà versé</p>
+                                <p class="font-black text-blue-700 mt-1">{{ number_format($paiementPartielExistant->total_verse, 0, ',', ' ') }} <span class="text-[10px]">GNF</span></p>
+                            </div>
+                            <div class="bg-amber-400 rounded-xl p-3 text-center">
+                                <p class="text-[10px] font-black text-amber-900 uppercase tracking-widest">Reste à payer</p>
+                                <p class="font-black text-white mt-1 text-lg">{{ number_format($paiementPartielExistant->solde_restant, 0, ',', ' ') }} <span class="text-[10px]">GNF</span></p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-700 font-medium mt-3 italic">
+                            <i class="fa-solid fa-circle-info mr-1"></i>
+                            Vous pouvez verser le montant restant ou un acompte. Le système l'ajoutera automatiquement à votre versement précédent.
+                        </p>
+                    </div>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                 
                 {{-- Détails de la transaction --}}
@@ -55,47 +102,77 @@
 
                     <div>
                         <label class="block text-sm font-black text-slate-700 mb-2">Contrat de bail</label>
-                        <div class="relative">
-                            <select name="contrat_id" required
-                                    class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold">
-                                <option value="">-- Choisir un contrat --</option>
+                    <div class="relative">
+                        <select name="{{ auth()->user()->isLocataire() ? 'contrat_id_display' : 'contrat_id' }}" id="contrat_select" required @if(auth()->user()->isLocataire()) disabled @endif
+                                class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold @if(auth()->user()->isLocataire()) bg-slate-200 cursor-not-allowed @endif">
+                                @if(count($contrats) > 1 && !auth()->user()->isLocataire())
+                                    <option value="">-- Choisir un contrat --</option>
+                                @endif
                                 @foreach($contrats as $c)
-                                <option value="{{ $c->id }}" {{ old('contrat_id') == $c->id ? 'selected' : '' }}>
+                                <option value="{{ $c->id }}" {{ (old('contrat_id') ?? request('contrat_id') ?? ($contrats->count() == 1 ? $contrats->first()->id : '')) == $c->id ? 'selected' : '' }}>
                                     {{ $c->locataire->prenom }} {{ $c->locataire->nom }} — {{ $c->bien->libelle }}
                                 </option>
                                 @endforeach
                             </select>
                             <i class="fa-solid fa-file-signature absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-black text-slate-700 mb-2">Loyer du mois de</label>
-                        <div class="relative">
-                            <input type="date" name="mois_concerne" value="{{ old('mois_concerne', date('Y-m-01')) }}" required
-                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold">
-                            <i class="fa-solid fa-calendar-check absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            
+                            @if(auth()->user()->isLocataire())
+                                <input type="hidden" name="contrat_id" value="{{ old('contrat_id', request('contrat_id', $contrats->first()->id ?? '')) }}">
+                            @endif
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-black text-slate-700 mb-2">Montant (GNF)</label>
-                            <input type="number" name="montant" value="{{ old('montant') }}" required
-                                   class="w-full bg-slate-50 border border-slate-200 text-emerald-600 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-lg">
+                            <label class="block text-sm font-black text-slate-700 mb-2">Loyer du mois de</label>
+                            <div class="relative">
+                                @php
+                                    // Verrouiller le mois si un paiement partiel existe (pour garantir la correspondance)
+                                    $moisVerrouille = (isset($paiementPartielExistant) && $paiementPartielExistant)
+                                        || auth()->user()->isComptable()
+                                        || auth()->user()->isGestionnaire();
+                                @endphp
+                                <input type="date" name="mois_concerne" id="mois_concerne" value="{{ old('mois_concerne', $defaultMonth) }}" required
+                                       @if($moisVerrouille) readonly @endif
+                                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold @if($moisVerrouille) bg-slate-200 text-slate-500 cursor-not-allowed @endif">
+                                <i class="fa-solid fa-calendar-check absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-black text-slate-700 mb-2">Période</label>
-                            <select name="type_paiement" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold">
-                                <option value="mensuel" {{ old('type_paiement') == 'mensuel' ? 'selected' : '' }}>Mensuel</option>
-                                <option value="annuel" {{ old('type_paiement') == 'annuel' ? 'selected' : '' }}>Annuel</option>
-                            </select>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Période payée</label>
+                            <div class="relative">
+                                <select name="type_paiement_display" @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) disabled @endif class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">
+                                    <option value="mensuel" {{ old('type_paiement') == 'mensuel' ? 'selected' : '' }}>Mensuel (1 mois)</option>
+                                    <option value="annuel" {{ old('type_paiement') == 'annuel' ? 'selected' : '' }}>Annuel (1 an)</option>
+                                </select>
+                                @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire())
+                                    <input type="hidden" name="type_paiement" value="{{ old('type_paiement', 'mensuel') }}">
+                                @else
+                                    <input type="hidden" name="type_paiement" value="mensuel" id="type_paiement_hidden">
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-black text-slate-700 mb-2">Loyer Fixe Attendu</label>
+                            <input type="text" id="loyer_attendu" value="" readonly
+                                   class="w-full bg-slate-100 border border-slate-200 text-slate-400 py-3 px-4 rounded-xl focus:outline-none cursor-not-allowed font-black text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-black text-emerald-700 mb-2">Montant à verser (GNF)</label>
+                            <input type="number" name="montant" id="montant" value="{{ old('montant') }}" required
+                                   @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) readonly @endif
+                                   placeholder="Combien payez-vous ?"
+                                   class="w-full bg-slate-50 border border-emerald-300 text-emerald-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-lg @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 text-emerald-900 cursor-not-allowed @endif">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-black text-slate-700 mb-2">Date encaissé</label>
                         <input type="date" name="date_paiement" value="{{ old('date_paiement', date('Y-m-d')) }}" required
-                               class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold">
+                               @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) readonly @endif
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-semibold @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">
                     </div>
                 </div>
 
@@ -109,8 +186,8 @@
                     <div>
                         <label class="block text-sm font-black text-slate-700 mb-2">Mode de paiement</label>
                         <div class="relative">
-                            <select name="mode_reglement" required
-                                    class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold">
+                            <select name="{{ (auth()->user()->isComptable() || auth()->user()->isGestionnaire()) ? 'mode_reglement_display' : 'mode_reglement' }}" required @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) disabled @endif
+                                    class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">
                                 <option value="">-- Choisir --</option>
                                 @foreach(['especes' => 'Espèces', 'virement' => 'Virement', 'mobile_money' => 'Mobile Money', 'cheque' => 'Chèque', 'autre' => 'Autre'] as $val => $label)
                                 <option value="{{ $val }}" {{ old('mode_reglement') == $val ? 'selected' : '' }}>
@@ -119,6 +196,9 @@
                                 @endforeach
                             </select>
                             <i class="fa-solid fa-wallet absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire())
+                                <input type="hidden" name="mode_reglement" value="{{ old('mode_reglement', 'especes') }}">
+                            @endif
                         </div>
                     </div>
 
@@ -126,91 +206,88 @@
                         <label class="block text-sm font-black text-slate-700 mb-2">Référence / N° de transaction</label>
                         <div class="relative">
                             <input type="text" name="reference" value="{{ old('reference') }}"
+                                   @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) readonly @endif
                                    placeholder="Ex: Orange Money ID, N° Chèque..."
-                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">
                             <i class="fa-solid fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-black text-slate-700 mb-2">Preuve de paiement (Optionnel)</label>
-                        <div class="relative group">
+                        <label class="block text-sm font-black text-slate-700 mb-2">Preuve de paiement (Image ou PDF)</label>
+                        <div class="relative">
                             <input type="file" name="preuve_paiement" 
-                                   class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 border border-slate-200 p-2 rounded-xl bg-slate-50 group-hover:border-purple-300 transition-all">
-                            <p class="mt-1 text-[10px] text-slate-400 font-bold italic">Photo du reçu, capture d'écran virement, etc. (PDF, JPG, PNG)</p>
+                                   @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) disabled @endif
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">
                         </div>
+                        <p class="text-[10px] text-slate-400 mt-1 italic">Capture d'écran de votre virement ou reçu de dépôt.</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-black text-slate-700 mb-2">Notes internes</label>
                         <textarea name="notes" rows="2"
+                                  @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) readonly @endif
                                   placeholder="Observations éventuelles..."
-                                  class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">{{ old('notes') }}</textarea>
+                                  class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all @if(auth()->user()->isComptable() || auth()->user()->isGestionnaire()) bg-slate-200 cursor-not-allowed @endif">{{ old('notes') }}</textarea>
                     </div>
                 </div>
 
-            </div>
-
-            {{-- INFOS BANCAIRES DU PROPRIÉTAIRE --}}
-            <div id="bank-info-container" class="mt-8 p-6 bg-blue-50 rounded-3xl border border-blue-100 hidden">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-university"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-blue-900">Coordonnées bancaires du propriétaire</h3>
-                        <p class="text-blue-700 text-xs italic">Veuillez effectuer le virement sur ce compte pour valider votre loyer.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Banque</p>
-                        <p id="bank-name" class="font-bold text-blue-900">-</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">RIB / N° de compte</p>
-                        <p id="bank-rib" class="font-bold text-blue-900">-</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Titulaire</p>
-                        <p id="bank-holder" class="font-bold text-blue-900">-</p>
-                    </div>
-                </div>
             </div>
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    const selectContrat = document.querySelector('select[name="contrat_id"]');
-                    const bankContainer = document.getElementById('bank-info-container');
-                    const bankName = document.getElementById('bank-name');
-                    const bankRib = document.getElementById('bank-rib');
-                    const bankHolder = document.getElementById('bank-holder');
-
+                    const selectContrat = document.getElementById('contrat_select');
+                    
                     const contractsData = {
                         @foreach($contrats as $c)
-                        "{{ $c->id }}": {
-                            "banque": "{{ $c->bien->proprietaire->nom_banque ?? 'Non spécifiée' }}",
-                            "rib": "{{ $c->bien->proprietaire->rib_bancaire ?? 'Non spécifié' }}",
-                            "titulaire": "{{ $c->bien->proprietaire->titulaire_compte ?? $c->bien->proprietaire->user->name }}"
+                         "{{ $c->id }}": {
+                            "loyer": "{{ $c->loyer }}",
+                            "prochain_mois": "{{ $c->paiements()->where('statut', 'paye')->orderBy('mois_concerne', 'desc')->first() ? \Carbon\Carbon::parse($c->paiements()->where('statut', 'paye')->orderBy('mois_concerne', 'desc')->first()->mois_concerne)->addMonth()->format('Y-m-01') : \Carbon\Carbon::parse($c->date_debut)->format('Y-m-01') }}"
                         },
                         @endforeach
                     };
 
-                    function updateBankInfo() {
-                        const selectedId = selectContrat.value;
+                    const inputLoyerAttendu = document.getElementById('loyer_attendu');
+                    const inputMoisConcerne = document.getElementById('mois_concerne');
+                    const inputMontant = document.getElementById('montant');
+                    const selectType = document.querySelector('select[name="type_paiement_display"]');
+                    const hiddenType = document.querySelector('input[name="type_paiement"]');
+
+                    function updatePaymentInfo() {
+                        let selectedId = selectContrat.value;
+                        
+                        if (!selectedId && selectContrat.options.length > 0) {
+                            for (let i = 0; i < selectContrat.options.length; i++) {
+                                if (selectContrat.options[i].value !== "") {
+                                    selectContrat.selectedIndex = i;
+                                    selectedId = selectContrat.value;
+                                    break;
+                                }
+                            }
+                        }
+
                         if (selectedId && contractsData[selectedId]) {
                             const data = contractsData[selectedId];
-                            bankName.textContent = data.banque;
-                            bankRib.textContent = data.rib;
-                            bankHolder.textContent = data.titulaire;
-                            bankContainer.classList.remove('hidden');
+                            inputLoyerAttendu.value = new Intl.NumberFormat('fr-FR').format(data.loyer) + ' GNF';
+                            
+                            const typeValue = selectType.value;
+                            if (hiddenType) hiddenType.value = typeValue;
+
+                            const multiplicateur = typeValue === 'annuel' ? 12 : 1;
+                            inputMontant.value = Math.round(data.loyer * multiplicateur);
+
+                            @if(!auth()->user()->isAdmin())
+                                inputMoisConcerne.value = data.prochain_mois;
+                            @endif
                         } else {
-                            bankContainer.classList.add('hidden');
+                            inputLoyerAttendu.value = '';
+                            inputMontant.value = '';
                         }
                     }
 
-                    selectContrat.addEventListener('change', updateBankInfo);
-                    updateBankInfo(); // Initial check
+                    selectContrat.addEventListener('change', updatePaymentInfo);
+                    selectType.addEventListener('change', updatePaymentInfo);
+                    updatePaymentInfo();
                 });
             </script>
 

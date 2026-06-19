@@ -174,4 +174,75 @@ class ProfileController extends Controller
 
         return Redirect::to('/')->with('success', 'Votre compte a été supprimé avec succès.');
     }
+    /**
+     * ASSISTANCE IA : Compléter les informations manquantes.
+     */
+    public function complete(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $request->validate([
+            'telephone' => 'required|string|max:20',
+            'adresse' => 'required|string|max:255',
+        ]);
+
+        if ($user->role === 'proprietaire') {
+            \App\Models\Proprietaire::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'telephone' => $request->telephone,
+                    'adresse' => $request->adresse,
+                    'rib_bancaire' => $request->rib_bancaire,
+                ]
+            );
+        } elseif ($user->role === 'locataire') {
+            \App\Models\Locataire::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'telephone' => $request->telephone,
+                    'nom_complet' => $user->name,
+                    'adresse' => $request->adresse,
+                    'email' => $user->email
+                ]
+            );
+        }
+
+        // Notification au staff
+        $staff = User::whereIn('role', ['admin', 'gestionnaire'])->get();
+        foreach ($staff as $member) {
+            $member->notify(new \App\Notifications\NewUserRegisteredNotification($user)); // On peut réutiliser ou créer une nouvelle
+        }
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'profile_completed_ia',
+            'description' => "Profil complété via assistance IA : " . $user->name,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Merci ! Vos informations ont été mises à jour avec succès.');
+    }
+
+    /**
+     * ASSISTANCE IA : Supprimer le compte si l'utilisateur refuse de compléter.
+     */
+    public function abort(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        
+        Auth::logout();
+        
+        // Suppression définitive (pas de soft delete ici pour ne laisser aucune trace)
+        if ($user->role === 'proprietaire' && $user->proprietaire) {
+            $user->proprietaire->forceDelete();
+        } elseif ($user->role === 'locataire' && $user->locataire) {
+            $user->locataire->forceDelete();
+        }
+        
+        $user->forceDelete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/')->with('info', 'Votre session a été annulée et vos données ont été supprimées.');
+    }
 }

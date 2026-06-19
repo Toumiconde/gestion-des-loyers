@@ -13,26 +13,45 @@
                 <i class="fa-solid fa-money-check-dollar"></i>
             </div>
             <div>
-                <h2 class="text-2xl font-black text-slate-800">Paiement de {{ number_format($paiement->montant, 0, ',', ' ') }} GNF</h2>
-                <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Période : {{ \Carbon\Carbon::parse($paiement->mois_concerne)->format('F Y') }}</p>
+                <h2 class="text-2xl font-black text-slate-800">Détails du Paiement</h2>
+                <p class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">
+                    Référence : <span class="text-slate-900 font-black">{{ $paiement->reference ?: 'SANS RÉFÉRENCE' }}</span>
+                </p>
             </div>
         </div>
         
         <div class="flex items-center gap-4">
             <span class="px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest 
                 {{ $paiement->statut === 'paye' ? 'bg-emerald-50 text-emerald-600' : ($paiement->statut === 'en_attente' ? 'bg-amber-50 text-amber-600 animate-pulse' : 'bg-rose-50 text-rose-600') }}">
-                {{ $paiement->statut === 'paye' ? 'Validé & Encaissé' : ($paiement->statut === 'en_attente' ? 'En attente de validation' : 'Partiel / Erreur') }}
+                {{ $paiement->statut === 'paye' ? 'Validé & Encaissé' : ($paiement->statut === 'en_attente' ? 'Vérification en cours' : 'Partiel / Erreur') }}
             </span>
             
-            @if(auth()->user()->role === 'admin' && $paiement->statut === 'en_attente')
-                <form action="{{ route('paiements.update', $paiement) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" name="action" value="valider">
-                    <button type="submit" class="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all">
-                        Valider ce paiement
-                    </button>
-                </form>
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire', 'comptable']) && $paiement->statut === 'en_attente')
+                @php
+                    $soldeRestant = $paiement->solde_restant ?? 0;
+                    $peutValider = $soldeRestant <= 0;
+                @endphp
+                @if($peutValider)
+                    <form action="{{ route('paiements.update', $paiement) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="action" value="valider">
+                        <button type="submit" class="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-check-double"></i>
+                            {{ str_contains($paiement->notes, '[Paiement Annuel') ? 'Confirmer l\'encaissement Annuel' : 'Confirmer l\'encaissement' }}
+                        </button>
+                    </form>
+                @else
+                    <div class="flex flex-col items-end gap-1">
+                        <div class="px-6 py-3 bg-amber-100 text-amber-700 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-amber-200 cursor-not-allowed opacity-80">
+                            <i class="fa-solid fa-hourglass-half animate-pulse"></i>
+                            Validation bloquée — Paiement incomplet
+                        </div>
+                        <p class="text-[10px] text-amber-600 font-bold">
+                            Reste à payer : {{ number_format($soldeRestant, 0, ',', ' ') }} GNF avant validation
+                        </p>
+                    </div>
+                @endif
             @endif
         </div>
     </div>
@@ -41,44 +60,104 @@
         
         {{-- Colonne Infos --}}
         <div class="lg:col-span-2 space-y-8">
-            {{-- Détails --}}
-            <div class="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm">
-                <h3 class="text-lg font-black text-slate-800 mb-8 uppercase tracking-widest text-sm flex items-center gap-3">
-                    <i class="fa-solid fa-circle-info text-blue-500"></i>
-                    Informations Transactionnelles
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Locataire</p>
-                        <p class="font-bold text-slate-700 text-lg">{{ $paiement->contrat->locataire->prenom }} {{ $paiement->contrat->locataire->nom }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Bien Immobilier</p>
-                        <p class="font-bold text-slate-700 text-lg">{{ $paiement->contrat->bien->libelle }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Date d'encaissement</p>
-                        <p class="font-bold text-slate-700">{{ $paiement->date_paiement->format('d F Y') }}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mode de règlement</p>
-                        <span class="px-4 py-1 bg-slate-100 rounded-full text-xs font-black text-slate-600 uppercase">{{ $paiement->mode_reglement }}</span>
-                    </div>
-                    @if($paiement->reference)
-                    <div class="md:col-span-2">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Référence / ID Transaction</p>
-                        <p class="font-mono font-bold text-blue-600">{{ $paiement->reference }}</p>
-                    </div>
-                    @endif
+            {{-- Détails Style Formulaire Figé --}}
+            <div class="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm relative">
+                <div class="absolute top-8 right-10 flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+                    <i class="fa-solid fa-lock text-slate-400 text-[10px]"></i>
+                    <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Données Figées</span>
                 </div>
 
-                @if($paiement->notes)
-                <div class="mt-10 p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Notes & Observations</p>
-                    <p class="text-sm text-slate-600 italic font-medium leading-relaxed">{{ $paiement->notes }}</p>
+                <h3 class="text-lg font-black text-slate-800 mb-10 uppercase tracking-widest text-sm flex items-center gap-3">
+                    <i class="fa-solid fa-file-invoice-dollar text-blue-500"></i>
+                    Vérification des informations
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Locataire concerné</label>
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl font-bold text-slate-700 flex justify-between items-center">
+                            <span>{{ $paiement->contrat->locataire->prenom }} {{ $paiement->contrat->locataire->nom }}</span>
+                            <span class="text-[10px] text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">Contrat : {{ $paiement->contrat->numero_contrat }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Période payée</label>
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl font-black text-slate-800 flex items-center gap-3">
+                            <i class="fa-solid fa-calendar-day text-slate-300"></i>
+                            {{ \Carbon\Carbon::parse($paiement->mois_concerne)->locale('fr')->isoFormat('MMMM YYYY') }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">Montant versé (ce versement)</label>
+                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl font-black text-emerald-700 text-xl flex justify-between items-center">
+                            <span>{{ number_format($paiement->montant, 0, ',', ' ') }}</span>
+                            <span class="text-xs">GNF</span>
+                        </div>
+                        @if($paiement->total_verse && $paiement->total_verse != $paiement->montant)
+                        <div class="mt-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black flex items-center gap-2">
+                            <i class="fa-solid fa-sigma"></i>
+                            Total cumulé versé : {{ number_format($paiement->total_verse, 0, ',', ' ') }} GNF
+                        </div>
+                        @endif
+                        @if($paiement->loyer_attendu)
+                        <div class="mt-1 px-3 py-1 bg-slate-50 text-slate-600 rounded-lg text-[10px] font-black flex items-center gap-2">
+                            <i class="fa-solid fa-file-contract"></i>
+                            Loyer attendu : {{ number_format($paiement->loyer_attendu, 0, ',', ' ') }} GNF
+                        </div>
+                        @endif
+                        @if($paiement->solde_restant > 0)
+                            <div class="mt-2 px-4 py-3 bg-amber-100 text-amber-800 rounded-xl text-sm font-black flex items-center gap-3 border border-amber-200">
+                                <i class="fa-solid fa-circle-exclamation text-amber-500 text-lg"></i>
+                                <div>
+                                    <p>Paiement partiel — Solde restant à payer :</p>
+                                    <p class="text-xl mt-0.5">{{ number_format($paiement->solde_restant, 0, ',', ' ') }} <span class="text-xs font-bold">GNF</span></p>
+                                </div>
+                            </div>
+                        @elseif($paiement->solde_restant === 0.0 || $paiement->solde_restant === '0.00')
+                            <div class="mt-2 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-xl text-[10px] font-black flex items-center gap-2 border border-emerald-200">
+                                <i class="fa-solid fa-check-double text-emerald-600"></i>
+                                Loyer du mois intégralement couvert ✅
+                            </div>
+                        @elseif($paiement->montant < $paiement->contrat->loyer)
+                            <div class="mt-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-black uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                Attention : Paiement partiel (Loyer prévu: {{ number_format($paiement->contrat->loyer, 0, ',', ' ') }} GNF)
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mode de règlement</label>
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl font-bold text-slate-700 capitalize flex items-center gap-3">
+                            <i class="fa-solid fa-wallet text-slate-300"></i>
+                            {{ str_replace('_', ' ', $paiement->mode_reglement) }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Référence Transaction</label>
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl font-mono font-bold text-blue-600 flex items-center gap-3">
+                            <i class="fa-solid fa-hashtag text-slate-300 text-xs"></i>
+                            {{ $paiement->reference ?: 'Non spécifiée' }}
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes du locataire / Détails internes</label>
+                        <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl text-sm text-slate-600 italic leading-relaxed">
+                            {{ $paiement->notes ?: 'Aucune note particulière.' }}
+                            
+                            @if(str_contains($paiement->notes, '[Paiement Annuel'))
+                            <div class="mt-4 p-4 bg-purple-50 border border-purple-100 rounded-xl">
+                                <p class="text-[10px] font-black text-purple-700 uppercase tracking-widest mb-1">Détail du paiement annuel</p>
+                                <p class="text-xs text-purple-600 font-medium">Couvre la période du <b>{{ \Carbon\Carbon::parse($paiement->mois_concerne)->format('d/m/Y') }}</b> au <b>{{ \Carbon\Carbon::parse($paiement->mois_concerne)->addMonths(11)->format('d/m/Y') }}</b>.</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                @endif
             </div>
 
             {{-- Preuve de Paiement --}}

@@ -29,7 +29,7 @@
             </ol>
         </nav>
         
-        @if(auth()->user()->role !== 'proprietaire')
+        @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
         <div class="flex gap-3">
             <a href="{{ route('biens.edit', $bien) }}" 
                class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-600 hover:text-white transition-all flex items-center gap-2">
@@ -54,7 +54,10 @@
                     </div>
                     <div class="absolute bottom-6 left-8 text-white">
                         <h2 class="text-2xl font-black">{{ $bien->libelle }}</h2>
-                        <p class="text-blue-200/80 text-sm capitalize">{{ $bien->type }} • {{ $bien->surface }}m²</p>
+                        <p class="text-blue-200/80 text-sm capitalize">
+                            {{ $bien->type === 'immeuble' ? 'Immeuble / Étage' : ucfirst($bien->type) }} 
+                            • {{ $bien->surface }}m²
+                        </p>
                     </div>
                 </div>
                 
@@ -69,15 +72,37 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-user-tie text-slate-400"></i>
-                        </div>
                         <div>
                             <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Propriétaire</p>
                             <a href="{{ route('proprietaires.show', $bien->proprietaire) }}" class="text-blue-600 font-black hover:underline">
                                 {{ $bien->proprietaire->user->name }}
                             </a>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-50">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Caractéristiques</p>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500">Chambres</span>
+                                <span class="font-bold text-slate-700">{{ $bien->nombre_chambres }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500">Sanitaires</span>
+                                <span class="font-bold text-slate-700">
+                                    @if($bien->type_douche === 'les_deux')
+                                        Interne & Externe
+                                    @else
+                                        {{ ucfirst($bien->type_douche) }}
+                                    @endif
+                                </span>
+                            </div>
+                            @if($bien->details_etage)
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Détails Étage</p>
+                                <p class="text-sm text-slate-700 font-medium">{{ $bien->details_etage }}</p>
+                            </div>
+                            @endif
                         </div>
                     </div>
 
@@ -110,7 +135,7 @@
                         <h3 class="text-xl font-black text-slate-800">Unités Locatives (Dalles/Étages)</h3>
                         <p class="text-xs text-slate-400 mt-1">Gérez les différents niveaux de ce bâtiment</p>
                     </div>
-                    @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
+                    @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
                     <button type="button" onclick="document.getElementById('modalAddUnite').classList.remove('hidden')" class="px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20">
                         <i class="fa-solid fa-plus"></i> Ajouter une Unité
                     </button>
@@ -126,7 +151,7 @@
                                 <th class="px-8 py-4">Chambres</th>
                                 <th class="px-8 py-4">Loyer</th>
                                 <th class="px-8 py-4 text-center">Statut</th>
-                                @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
+                                @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
                                 <th class="px-8 py-4 text-right">Actions</th>
                                 @endif
                             </tr>
@@ -144,7 +169,7 @@
                                         {{ $unite->statut }}
                                     </span>
                                 </td>
-                                @if(auth()->user()->role !== 'locataire' && auth()->user()->role !== 'proprietaire')
+                                @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
                                 <td class="px-8 py-4 text-right flex justify-end gap-2">
                                     <form action="{{ route('unites-locatives.destroy', $unite) }}" method="POST" onsubmit="return confirm('Supprimer cette unité ?')">
                                         @csrf @method('DELETE')
@@ -213,7 +238,7 @@
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="p-8 border-b border-slate-100 flex justify-between items-center">
                     <h3 class="text-xl font-black text-slate-800">Historique des Contrats</h3>
-                    @if($bien->statut === 'disponible')
+                    @if($bien->statut === 'disponible' && (auth()->user()->isAdmin() || auth()->user()->isGestionnaire()))
                     <a href="{{ route('contrats.create', ['bien_id' => $bien->id]) }}" class="text-blue-600 font-black text-sm hover:underline flex items-center gap-2">
                         <i class="fa-solid fa-plus-circle"></i> Nouveau Contrat
                     </a>

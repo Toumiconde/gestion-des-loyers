@@ -12,7 +12,17 @@ class IncidentController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $query = Incident::with('contrat.locataire', 'contrat.bien')->orderBy('priorite', 'desc');
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
+        
+        $query = Incident::with('contrat.locataire', 'contrat.bien')
+            ->whereYear('created_at', $selectedYear);
+            
+        if ($selectedMonth) {
+            $query->whereMonth('created_at', $selectedMonth);
+        }
+            
+        $query->orderBy('priorite', 'desc');
         $maintenanceRequests = collect();
 
         if ($user->isProprietaire()) {
@@ -154,7 +164,7 @@ class IncidentController extends Controller
 
     public function edit(Incident $incident)
     {
-        if (auth()->user()->isProprietaire() || auth()->user()->isLocataire()) {
+        if (in_array(auth()->user()->role, ['proprietaire', 'locataire', 'comptable'])) {
             abort(403, 'Vous ne pouvez pas modifier un incident.');
         }
         
@@ -164,7 +174,7 @@ class IncidentController extends Controller
 
     public function update(Request $request, Incident $incident)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire() && auth()->user()->role !== 'comptable') {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
             abort(403, 'Accès non autorisé.');
         }
 

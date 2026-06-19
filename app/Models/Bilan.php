@@ -12,10 +12,15 @@ class Bilan extends Model
         'annee',
         'total_revenus',
         'total_depenses',
+        'frais_gestion',
         'montant_net',
+        'statut',
+        'date_virement',
+        'ref_virement',
         'envoye_le',
         'consulte_le',
         'pdf_path',
+        'mode_paiement',
     ];
 
     public function proprietaire()

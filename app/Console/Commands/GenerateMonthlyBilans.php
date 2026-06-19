@@ -43,9 +43,11 @@ class GenerateMonthlyBilans extends Command
             ->whereMonth('updated_at', $month)
             ->sum('cout_reel');
 
-            $net = $totalRevenus - $totalDepenses;
+            // 3. Calcul de la commission agence
+            $fraisGestion = ($totalRevenus * $p->commission_rate) / 100;
+            $net = $totalRevenus - $totalDepenses - $fraisGestion;
 
-            // 3. Création/Mise à jour du bilan
+            // 4. Création/Mise à jour du bilan
             Bilan::updateOrCreate(
                 [
                     'proprietaire_id' => $p->id,
@@ -55,6 +57,7 @@ class GenerateMonthlyBilans extends Command
                 [
                     'total_revenus' => $totalRevenus,
                     'total_depenses' => $totalDepenses,
+                    'frais_gestion'  => $fraisGestion,
                     'montant_net' => $net,
                     'envoye_le' => now(), // On marque comme "envoyé" dès la génération automatique
                 ]

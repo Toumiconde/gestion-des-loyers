@@ -30,7 +30,7 @@
         </nav>
         
         <div class="flex gap-3">
-            @if(!in_array(auth()->user()->role, ['proprietaire', 'locataire']))
+            @if(in_array(auth()->user()->role, ['admin', 'gestionnaire']))
             <a href="{{ route('incidents.edit', $incident) }}" 
                class="px-5 py-2.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
                 <i class="fa-solid fa-screwdriver-wrench"></i> Gérer le chantier

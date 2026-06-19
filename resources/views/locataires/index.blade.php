@@ -19,7 +19,7 @@
         </a>
         @endif
 
-        @if(auth()->user()->role !== 'proprietaire')
+        @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
         <a href="{{ route('locataires.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-700 shadow-xl shadow-purple-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-user-plus mr-2 group-hover:rotate-12 transition-transform"></i>
@@ -132,7 +132,7 @@
                             <a href="{{ route('locataires.show', $l) }}" class="w-9 h-9 rounded-xl bg-white text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-purple-600 hover:text-white transition-all shadow-sm" title="Voir profil">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
-                            @if(auth()->user()->role !== 'proprietaire')
+                            @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
                                 @if(!$l->trashed() && $l->user)
                                 <form action="{{ route('admin.users.reset-password', $l->user) }}" method="POST" onsubmit="return confirm('Réinitialiser le mot de passe de {{ $l->nom_complet }} ?')" class="inline">
                                     @csrf

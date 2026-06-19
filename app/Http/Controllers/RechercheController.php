@@ -58,12 +58,12 @@ class RechercheController extends Controller
         ]);
 
         // Notifications
-        $admins = User::where('role', 'admin')->get();
+        $adminsAndManagers = User::whereIn('role', ['admin', 'gestionnaire'])->get();
         $proprietaire = $unite->bien->proprietaire->user;
 
         $msg = "📢 Nouvelle Demande : **{$user->name}** souhaite louer l'unité **{$unite->libelle}** du bien **{$unite->bien->libelle}**.";
         
-        Notification::send($admins, new \App\Notifications\ProfileUpdated($user, $msg));
+        Notification::send($adminsAndManagers, new \App\Notifications\ProfileUpdated($user, $msg));
         $proprietaire->notify(new \App\Notifications\ProfileUpdated($user, $msg));
 
         // Logger l'action

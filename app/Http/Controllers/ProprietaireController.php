@@ -16,11 +16,7 @@ class ProprietaireController extends Controller
 
         $proprietaires = Proprietaire::with('user')
                         ->withTrashed()
-                        ->where('created_at', '<=', $endOfYear)
-                        ->where(function($q) use ($endOfYear) {
-                            $q->whereNull('deleted_at')
-                              ->orWhere('deleted_at', '>', $endOfYear);
-                        })
+                        ->whereYear('created_at', $selectedYear)
                         ->paginate(10);
 
         return view('proprietaires.index', compact('proprietaires', 'selectedYear'));
@@ -42,6 +38,7 @@ class ProprietaireController extends Controller
             'password'     => 'required|min:8',
             'telephone'    => 'nullable|string|max:20',
             'adresse'      => 'nullable|string',
+            'commission_rate' => 'required|numeric|min:0|max:100',
             'rib_bancaire' => 'nullable|string|max:100',
             'nom_banque'   => 'nullable|string|max:100',
             'titulaire_compte' => 'nullable|string|max:100',
@@ -58,6 +55,7 @@ class ProprietaireController extends Controller
         // Puis le profil propriétaire lié à ce user
         $proprietaireData = [
             'user_id'      => $user->id,
+            'commission_rate' => $validated['commission_rate'],
             'telephone'    => $validated['telephone'],
             'adresse'      => $validated['adresse'],
             'rib_bancaire' => $validated['rib_bancaire'],
@@ -107,6 +105,7 @@ class ProprietaireController extends Controller
             'name'         => 'required|string|max:255',
             'telephone'    => 'nullable|string|max:20',
             'adresse'      => 'nullable|string',
+            'commission_rate' => 'required|numeric|min:0|max:100',
             'rib_bancaire' => 'nullable|string|max:100',
             'nom_banque'   => 'nullable|string|max:100',
             'titulaire_compte' => 'nullable|string|max:100',

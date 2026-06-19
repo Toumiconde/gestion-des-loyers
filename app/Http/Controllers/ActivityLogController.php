@@ -9,9 +9,17 @@ class ActivityLogController extends Controller
 {
     public function index()
     {
-        // Seulement l'admin peut voir les logs
-        $logs = ActivityLog::with('user')->latest()->paginate(20);
-        return view('activity_logs.index', compact('logs'));
+        $selectedYear = session('selected_year', date('Y'));
+        $selectedMonth = session('selected_month');
+        
+        $query = ActivityLog::with('user')->whereYear('created_at', $selectedYear);
+        
+        if ($selectedMonth) {
+            $query->whereMonth('created_at', $selectedMonth);
+        }
+
+        $logs = $query->latest()->paginate(20);
+        return view('activity_logs.index', compact('logs', 'selectedYear', 'selectedMonth'));
     }
 
     public function show(ActivityLog $activityLog)

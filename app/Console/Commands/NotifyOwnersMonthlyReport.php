@@ -48,6 +48,6 @@ class NotifyOwnersMonthlyReport extends Command
             $this->line("Notification envoyée à : {$owner->name} ({$owner->email})");
         }
 
-        $this->success("Terminé ! Toutes les notifications ont été envoyées.");
+        $this->info("Terminé ! Toutes les notifications ont été envoyées.");
     }
 }

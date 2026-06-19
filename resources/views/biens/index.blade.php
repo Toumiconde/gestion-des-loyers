@@ -19,7 +19,7 @@
         </a>
         @endif
 
-        @if(auth()->user()->role !== 'proprietaire')
+        @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
         <a href="{{ route('biens.create') }}" 
            class="inline-flex items-center justify-center px-6 py-3.5 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95 group">
             <i class="fa-solid fa-house-medical mr-2 group-hover:scale-110 transition-transform"></i>
@@ -130,7 +130,7 @@
                             <a href="{{ route('biens.show', $bien) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </a>
-                            @if(auth()->user()->role !== 'proprietaire' && !$bien->trashed())
+                            @if((auth()->user()->isAdmin() || auth()->user()->isGestionnaire()) && !$bien->trashed())
                             <a href="{{ route('biens.edit', $bien) }}" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm">
                                 <i class="fa-solid fa-pen text-sm"></i>
                             </a>

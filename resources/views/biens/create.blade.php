@@ -93,14 +93,24 @@
                             <select name="type" required
                                     class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold cursor-pointer">
                                 <option value="">-- Choisir un type --</option>
-                                @foreach(['appartement','maison','studio','bureau','commerce','autre'] as $type)
+                                @foreach(['appartement','maison','studio','bureau','commerce','immeuble','autre'] as $type)
                                 <option value="{{ $type }}" {{ old('type') == $type ? 'selected' : '' }}>
-                                    {{ ucfirst($type) }}
+                                    {{ $type === 'immeuble' ? 'Immeuble / Étage' : ucfirst($type) }}
                                 </option>
                                 @endforeach
                             </select>
                             <i class="fa-solid fa-house-chimney absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                             <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div id="etage_field" class="{{ old('type') === 'immeuble' ? '' : 'hidden' }}">
+                        <label class="block text-sm font-black text-slate-700 mb-2">Précisions Étage (si applicable)</label>
+                        <div class="relative">
+                            <input type="text" name="details_etage" value="{{ old('details_etage') }}"
+                                   placeholder="Ex: 3 dalles tout dispo, 1er étage gauche..."
+                                   class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            <i class="fa-solid fa-layer-group absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                         </div>
                     </div>
 
@@ -129,6 +139,7 @@
                                 <select name="type_douche" class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold cursor-pointer">
                                     <option value="interne" {{ old('type_douche') == 'interne' ? 'selected' : '' }}>Douche Interne</option>
                                     <option value="externe" {{ old('type_douche') == 'externe' ? 'selected' : '' }}>Douche Externe</option>
+                                    <option value="les_deux" {{ old('type_douche') == 'les_deux' ? 'selected' : '' }}>Les deux (Interne & Externe)</option>
                                 </select>
                                 <i class="fa-solid fa-shower absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                                 <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
@@ -221,4 +232,14 @@
     </div>
 </div>
 
+<script>
+    document.querySelector('select[name="type"]').addEventListener('change', function() {
+        const etageField = document.getElementById('etage_field');
+        if (this.value === 'immeuble') {
+            etageField.classList.remove('hidden');
+        } else {
+            etageField.classList.add('hidden');
+        }
+    });
+</script>
 @endsection

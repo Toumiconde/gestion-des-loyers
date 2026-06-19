@@ -10,8 +10,8 @@ class LocataireController extends Controller
 {
     private function authorizeEditor()
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->isProprietaire()) {
-            abort(403, 'Accès non autorisé - Seuls les administrateurs et propriétaires peuvent gérer les locataires.');
+        if (!auth()->user()->isAdmin() && !auth()->user()->isGestionnaire()) {
+            abort(403, 'Accès non autorisé - Seuls les administrateurs et gestionnaires peuvent gérer les locataires.');
         }
     }
 
@@ -43,6 +43,9 @@ class LocataireController extends Controller
             // Un locataire ne voit que lui-même
             $locataireId = auth()->user()->locataire->id ?? 0;
             $query->where('id', $locataireId);
+        } elseif (auth()->user()->role === 'comptable') {
+            // Un comptable ne voit que les locataires qui ont au moins un contrat
+            $query->has('contrats');
         }
 
         $locataires = $query->paginate(15);

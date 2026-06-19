@@ -32,7 +32,7 @@
         </nav>
         
         <div class="flex gap-3">
-            @if(auth()->user()->isAdmin() && $proprietaire->user)
+            @if((auth()->user()->isAdmin() || auth()->user()->isGestionnaire()) && $proprietaire->user)
             <form action="{{ route('admin.users.reset-password', $proprietaire->user) }}" method="POST"
                   onsubmit="return confirm('Réinitialiser le mot de passe de {{ $proprietaire->user->name }} ?')">
                 @csrf
@@ -42,10 +42,12 @@
                 </button>
             </form>
             @endif
+            @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire())
             <a href="{{ route('proprietaires.edit', $proprietaire) }}" 
                class="px-5 py-2.5 bg-amber-50 text-amber-600 font-bold rounded-xl hover:bg-amber-600 hover:text-white transition-all flex items-center gap-2">
                 <i class="fa-solid fa-pen-to-square"></i> Modifier
             </a>
+            @endif
         </div>
     </div>
 
@@ -138,6 +140,43 @@
                     </table>
                 </div>
             </div>
+
+            {{-- Gestion Financière (Clôture Mensuelle) --}}
+            @if(auth()->user()->isAdmin() || auth()->user()->isGestionnaire() || auth()->user()->isComptable())
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-black text-slate-800">Clôture Financière</h3>
+                    <i class="fa-solid fa-lock text-slate-200 text-2xl"></i>
+                </div>
+                <form action="{{ route('reports.cloturer') }}" method="POST" class="flex flex-wrap items-end gap-4">
+                    @csrf
+                    <input type="hidden" name="proprietaire_id" value="{{ $proprietaire->id }}">
+                    <div class="flex-1 min-w-[120px]">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Mois à clôturer</label>
+                        <select name="month" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-2 px-4 rounded-xl font-bold text-sm">
+                            @php $months = [1=>'Janvier',2=>'Février',3=>'Mars',4=>'Avril',5=>'Mai',6=>'Juin',7=>'Juillet',8=>'Août',9=>'Septembre',10=>'Octobre',11=>'Novembre',12=>'Décembre']; @endphp
+                            @foreach($months as $num => $name)
+                                <option value="{{ $num }}" {{ date('n') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Année</label>
+                        <select name="year" class="w-full bg-slate-50 border border-slate-200 text-slate-700 py-2 px-4 rounded-xl font-bold text-sm">
+                            @for($y = 2024; $y <= 2030; $y++)
+                                <option value="{{ $y }}" {{ session('selected_year', date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">
+                        Clôturer le mois
+                    </button>
+                </form>
+                <p class="mt-4 text-[10px] text-slate-400 font-medium italic">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Cette action calcule le montant net et permet au propriétaire de télécharger son relevé de gestion officiel.
+                </p>
+            </div>
+            @endif
 
             {{-- Résumé Financier Rapide --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

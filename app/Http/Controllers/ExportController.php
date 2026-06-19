@@ -169,28 +169,46 @@ class ExportController extends Controller
             ->header('Content-Disposition', 'attachment; filename="contrats_premium_' . date('Y-m-d') . '.xls"');
     }
 
-    public function exportPaiements()
+    public function exportPaiements(Request $request)
     {
         ob_end_clean();
         
         $headers = ['ID', 'Locataire', 'Bien', 'Mois Concerné', 'Montant', 'Date Paiement', 'Mode', 'Référence', 'Statut'];
         $data = [];
 
-        Paiement::with('contrat.locataire', 'contrat.bien')->get()->each(function($p) use (&$data) {
+        $year = $request->get('year', date('Y'));
+        $month = $request->get('month');
+
+        $query = Paiement::with('contrat.locataire', 'contrat.bien')
+            ->whereYear('mois_concerne', $year);
+
+        if ($month) {
+            $query->whereMonth('mois_concerne', $month);
+        }
+
+        // Filtre par rôle
+        $user = auth()->user();
+        if ($user->isProprietaire()) {
+            $pId = $user->proprietaire->id;
+            $query->whereHas('contrat.bien', fn($q) => $q->where('proprietaire_id', $pId));
+        }
+
+        $query->get()->each(function($p) use (&$data) {
             $data[] = [
                 $p->id,
                 $p->contrat->locataire->nom_complet ?? 'N/A',
                 $p->contrat->bien->libelle ?? 'N/A',
-                $p->mois_concerne ? $p->mois_concerne->format('M Y') : 'N/A',
+                $p->mois_concerne ? \Carbon\Carbon::parse($p->mois_concerne)->format('m/Y') : 'N/A',
                 $p->montant,
-                $p->date_paiement ? $p->date_paiement->format('d/m/Y') : 'N/A',
+                $p->date_paiement ? \Carbon\Carbon::parse($p->date_paiement)->format('d/m/Y') : 'N/A',
                 $p->mode_reglement,
                 $p->reference ?? 'N/A',
                 $p->statut
             ];
         });
 
-        $exportData = array_merge($this->getCommonData('JOURNAL DES ENCAISSEMENTS ET QUITTANCES'), [
+        $periodLabel = $month ? "MOIS $month / $year" : "ANNEE $year";
+        $exportData = array_merge($this->getCommonData('JOURNAL DES ENCAISSEMENTS - ' . $periodLabel), [
             'headers' => $headers,
             'data'    => $data,
         ]);
